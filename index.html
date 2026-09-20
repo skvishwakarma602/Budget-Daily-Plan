@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Budget Planner Pro - Ultimate Analytics & Fleet Tracker</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 16px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .reminder-banner {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        }
+
+        .reminder-banner button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .month-bar {
+            background: var(--card-bg);
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .month-bar label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            margin-bottom: 0;
+        }
+
+        .month-bar select {
+            width: 45%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-weight: 600;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .feature-btn {
+            background: var(--card-bg);
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            transition: all 0.2s;
+        }
+
+        .feature-btn:hover {
+            border-color: var(--primary-color);
+            background: #eef2ff;
+        }
+
+        .feature-btn.full-span {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            border: none;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .card.full-width {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            color: white;
+        }
+
+        .card h3 {
+            font-size: 0.82rem;
+            color: #6b7280;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .card.full-width h3 {
+            color: #c7d2fe;
+        }
+
+        .card .amount {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .card.full-width .amount {
+            font-size: 1.75rem;
+        }
+
+        .payment-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pay-mode-card {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            font-size: 0.85rem;
+        }
+
+        .pay-mode-card span {
+            font-weight: bold;
+            display: block;
+            font-size: 1.05rem;
+            margin-top: 4px;
+        }
+
+        .breakdown-card {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .breakdown-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+
+        .breakdown-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-badge {
+            background: #eef2ff;
+            color: var(--primary-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .form-section {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .form-section h2 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: #4b5563;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.2s;
+            margin-top: 6px;
+        }
+
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-success { background-color: var(--success-color); }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-warning { background-color: #25d366; }
+        .btn-pdf { background-color: #dc2626; }
+        .btn-excel { background-color: #059669; }
+        .btn-backup { background-color: #3b82f6; }
+        .btn-restore { background-color: #8b5cf6; }
+        .btn-cancel { background-color: #6b7280; }
+
+        .btn:active { opacity: 0.85; }
+
+        .export-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quick-add-inline-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 12px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .history-section {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .history-section h2 {
+            font-size: 1rem;
+        }
+
+        .transaction-list {
+            list-style: none;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 4px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.9rem;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .t-details div:first-child {
+            font-weight: 600;
+        }
+
+        .category-tag {
+            font-size: 0.7rem;
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 2px;
+            color: #374151;
+        }
+
+        .mode-tag {
+            font-size: 0.65rem;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+
+        .t-details div:last-child {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .t-amount.income {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .t-amount.expense {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .action-icon-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px 8px;
+            border-radius: 6px;
+        }
+
+        .btn-edit { color: var(--primary-color); }
+        .btn-del { color: var(--danger-color); }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 580px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+
+        .analytics-tabs {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            margin-bottom: 14px;
+        }
+
+        .analytics-tab-btn {
+            padding: 6px 2px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            cursor: pointer;
+            color: #4b5563;
+            text-align: center;
+        }
+
+        .analytics-tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .analytics-item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.85rem;
+        }
+
+        .insight-box {
+            background: #eef2ff;
+            border-left: 4px solid var(--primary-color);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+            color: #374151;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 15px;
+        }
+
+        .cal-header-cell {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #6b7280;
+            padding: 4px 0;
+        }
+
+        .cal-day-cell {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            min-height: 55px;
+            padding: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cal-day-cell:hover {
+            border-color: var(--primary-color);
+            background: #eef2ff;
+        }
+
+        .cal-day-cell.has-trans {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .cal-day-cell.has-loss {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1><span>💸</span> Monthly Budget Planner</h1>
+            <p style="font-size: 0.85rem; color: #6b7280;">Advanced Income, Fleet & Analytics Dashboard</p>
+        </header>
+
+        <div id="eveningReminderBanner" class="reminder-banner" style="display: none;">
+            <span>🌙 <strong>Evening Reminder:</strong> Aaj ke saare fuel entries ya kharche app mein darj kar lijiye!</span>
+            <button onclick="dismissEveningReminder()">Got it</button>
+        </div>
+
+        <div class="month-bar">
+            <label for="monthFilter">Active Month:</label>
+            <select id="monthFilter" onchange="changeActiveMonth()"></select>
+            <button class="action-icon-btn btn-del" onclick="deleteCurrentMonthData()" title="Delete Current Month" style="font-size: 0.80rem; font-weight: bold; padding: 6px 8px;">🗑️ Delete</button>
+        </div>
+
+        <div class="feature-grid">
+            <button class="feature-btn full-span" onclick="openAnalyticsModal()">
+                📊 Advanced Analytics & Charts Dashboard
+            </button>
+            <button class="feature-btn" onclick="openCalendarModal()">
+                📅 Calendar View
+            </button>
+            <button class="feature-btn" onclick="openKhataModal()">
+                📖 Udhaar / Khata Book
+            </button>
+            <button class="feature-btn full-span" onclick="openVehicleModal()">
+                🚗 Vehicle Service & Maintenance
+            </button>
+        </div>
+
+        <div class="dashboard">
+            <div class="card full-width">
+                <h3>Net Balance</h3>
+                <div class="amount" id="netBalance">₹0</div>
+            </div>
+            <div class="card">
+                <h3>Base Budget</h3>
+                <div class="amount" id="displayBaseBudget" style="color: #c7d2fe;">₹0</div>
+            </div>
+            <div class="card">
+                <h3>Extra Income</h3>
+                <div class="amount" id="totalIncome" style="color: var(--success-color);">₹0</div>
+            </div>
+            <div class="card full-width">
+                <h3>Total Expenses</h3>
+                <div class="amount" id="totalExpense" style="color: var(--danger-color);">₹0</div>
+            </div>
+        </div>
+
+        <div class="payment-breakdown">
+            <div class="pay-mode-card">
+                <span style="color: #2563eb;">💵 Cash Total</span>
+                <span id="cashTotalDisplay">₹0</span>
+            </div>
+            <div class="pay-mode-card">
+                <span style="color: #7c3aed;">📱 UPI / Digital</span>
+                <span id="upiTotalDisplay">₹0</span>
+            </div>
+        </div>
+
+        <div class="breakdown-card" id="breakdownContainer" style="display: none;">
+            <h3>Category-wise Expenses</h3>
+            <div class="breakdown-tags" id="categoryTags"></div>
+        </div>
+
+        <div class="form-section">
+            <h2>Set Monthly Base Amount</h2>
+            <div class="input-group">
+                <input type="number" id="baseBudgetInput" placeholder="Enter starting monthly amount" onkeydown="if(event.key === 'Enter') setBaseBudget()">
+            </div>
+            <button class="btn btn-primary" onclick="setBaseBudget()">Update Base Budget</button>
+        </div>
+
+        <div class="form-section" id="formCard">
+            <h2 id="formTitle">Add Income / Expense</h2>
+            <div class="input-group">
+                <label for="transType">Type</label>
+                <select id="transType" onchange="updateCategories()">
+                    <option value="expense">Expense (-)</option>
+                    <option value="income" selected>Extra Income (+)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="transCategory">Category</label>
+                <select id="transCategory" onchange="onCategoryChange()"></select>
+            </div>
+            <div class="input-group">
+                <label for="transPaymentMode">Payment Mode</label>
+                <select id="transPaymentMode">
+                    <option value="Cash">Cash 💵</option>
+                    <option value="UPI" selected>UPI / Digital 📱</option>
+                </select>
+            </div>
+
+            <button id="quickAddInlineBtn" class="quick-add-inline-btn" onclick="saveTransaction()">
+                ⚡ Quick Add Transaction
+            </button>
+
+            <div class="input-group">
+                <label for="transAmount">Amount (₹)</label>
+                <input type="number" id="transAmount" placeholder="Enter amount" onfocus="checkQuickAddVisibility()" oninput="checkQuickAddVisibility()" onblur="checkQuickAddVisibility()" onkeydown="if(event.key === 'Enter') saveTransaction()">
+            </div>
+
+            <div class="input-group">
+                <label for="transTitle">Description (Optional)</label>
+                <input type="text" id="transTitle" placeholder="Enter description (optional)" onkeydown="if(event.key === 'Enter') saveTransaction()">
+            </div>
+            <button class="btn btn-success" id="actionBtn" onclick="saveTransaction()">Add Transaction</button>
+            <button class="btn btn-cancel" id="cancelBtn" style="display: none;" onclick="cancelEdit()">Cancel Edit</button>
+        </div>
+
+        <div class="history-section">
+            <div class="history-header">
+                <h2>Transactions History</h2>
+                <button class="action-icon-btn btn-del" style="font-size: 0.85rem; font-weight: bold;" onclick="addNewMonthPrompt()">+ New Month</button>
+            </div>
+            <ul class="transaction-list" id="transactionList"></ul>
+            
+            <div class="export-section">
+                <button class="btn btn-pdf" onclick="exportToPDF()">PDF Report & Share</button>
+                <button class="btn btn-excel" onclick="exportToExcel()">Excel Report</button>
+            </div>
+
+            <div class="export-section">
+                <button class="btn btn-backup" onclick="exportBackupJSON()">💾 Backup Data</button>
+                <button class="btn btn-restore" onclick="triggerRestore()">📂 Restore Data</button>
+                <input type="file" id="restoreFile" style="display: none;" accept=".json" onchange="importBackupJSON(event)">
+            </div>
+            
+            <button class="btn btn-warning" onclick="shareOnWhatsApp()" style="margin-top: 10px;">Share Full Report on WhatsApp</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="analyticsModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 style="font-size: 1.05rem; color: var(--primary-color);">📊 Advanced Financial Analytics</h2>
+                <div style="display: flex; gap: 6px;">
+                    <button class="action-icon-btn" onclick="downloadChartImage()" title="Download Chart Image">📥</button>
+                    <button class="action-icon-btn btn-del" onclick="closeAnalyticsModal()">✕</button>
+                </div>
+            </div>
+
+            <div class="analytics-tabs">
+                <button class="analytics-tab-btn active" id="btnDailyTab" onclick="switchAnalyticsTab('daily')">Daily</button>
+                <button class="analytics-tab-btn" id="btnWeeklyTab" onclick="switchAnalyticsTab('weekly')">Weekly</button>
+                <button class="analytics-tab-btn" id="btnCategoryTab" onclick="switchAnalyticsTab('category')">Expenses</button>
+                <button class="analytics-tab-btn" id="btnIncomeTab" onclick="switchAnalyticsTab('income')">Income</button>
+                <button class="analytics-tab-btn" id="btnMonthlyTab" onclick="switchAnalyticsTab('monthly')">Months</button>
+            </div>
+
+            <div id="analyticsInsight" class="insight-box">Loading financial insights...</div>
+
+            <div style="position: relative; height: 210px; margin-bottom: 14px;">
+                <canvas id="analyticsChart"></canvas>
+            </div>
+
+            <div id="analyticsContentList" style="max-height: 160px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="calendarModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 style="font-size: 1.05rem; color: var(--primary-color);">📅 Calendar Profit / Loss View</h2>
+                <button class="action-icon-btn btn-del" onclick="closeCalendarModal()">✕</button>
+            </div>
+            <div id="calendarMonthTitle" style="text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 0.95rem;"></div>
+            <div class="calendar-grid">
+                <div class="cal-header-cell">Su</div>
+                <div class="cal-header-cell">Mo</div>
+                <div class="cal-header-cell">Tu</div>
+                <div class="cal-header-cell">We</div>
+                <div class="cal-header-cell">Th</div>
+                <div class="cal-header-cell">Fr</div>
+                <div class="cal-header-cell">Sa</div>
+            </div>
+            <div id="calendarDaysGrid" class="calendar-grid"></div>
+            <div id="calendarDayDetails" style="margin-top: 15px; border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: 0.85rem;">
+                <em style="color: #6b7280;">Click any date cell above to view transactions for that day.</em>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="khataModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 style="font-size: 1.05rem; color: var(--primary-color);">📖 Udhaar & Lending Tracker (Khata Book)</h2>
+                <button class="action-icon-btn btn-del" onclick="closeKhataModal()">✕</button>
+            </div>
+
+            <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
+                <h3 style="font-size: 0.9rem; margin-bottom: 8px;">Add New Udhaar Entry</h3>
+                <div class="input-group">
+                    <label>Person Name</label>
+                    <input type="text" id="khataPerson" placeholder="Enter person name">
+                </div>
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="khataType">
+                        <option value="given">Paisaa Diya (Given / Udhaar)</option>
+                        <option value="taken">Paisaa Liya (Taken / Borrowed)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Amount (₹)</label>
+                    <input type="number" id="khataAmount" placeholder="Enter amount">
+                </div>
+                <div class="input-group">
+                    <label>Due Date / Return Date</label>
+                    <input type="date" id="khataDueDate">
+                </div>
+                <div class="input-group">
+                    <label>Notes / Reason</label>
+                    <input type="text" id="khataNotes" placeholder="Optional note">
+                </div>
+                <button class="btn btn-primary" onclick="saveUdhaarEntry()">Save Khata Entry</button>
+            </div>
+
+            <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 8px;">Pending & Active Udhaar</div>
+            <div id="khataListContainer" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="vehicleModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 style="font-size: 1.05rem; color: var(--primary-color);">🚗 Vehicle Maintenance & Reminders</h2>
+                <button class="action-icon-btn btn-del" onclick="closeVehicleModal()">✕</button>
+            </div>
+
+            <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
+                <h3 style="font-size: 0.9rem; margin-bottom: 8px;">Add Maintenance Reminder</h3>
+                <div class="input-group">
+                    <label>Task / Service Name (e.g. Engine Oil Change, PUC, Insurance)</label>
+                    <input type="text" id="vTitle" placeholder="e.g. Engine Oil Change">
+                </div>
+                <div class="input-group">
+                    <label>Due Date</label>
+                    <input type="date" id="vDate">
+                </div>
+                <div class="input-group">
+                    <label>Target KM (Optional)</label>
+                    <input type="number" id="vKm" placeholder="Target Odometer KM">
+                </div>
+                <button class="btn btn-primary" onclick="saveVehicleReminder()">Add Reminder</button>
+            </div>
+
+            <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 8px;">Service & Document Reminders</div>
+            <div id="vehicleListContainer" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
+        let vehicleReminders = JSON.parse(localStorage.getItem('vehicleReminders')) || [];
+        let editingId = null;
+        let analyticsChartInstance = null;
+        let currentAnalyticsTab = 'daily';
+
+        function checkEveningReminder() {
+            const lastDismissed = localStorage.getItem('eveningReminderDismissed');
+            const todayStr = new Date().toDateString();
+            const currentHour = new Date().getHours();
+            if (currentHour >= 18 && lastDismissed !== todayStr) {
+                document.getElementById('eveningReminderBanner').style.display = 'flex';
+            }
+        }
+
+        function dismissEveningReminder() {
+            localStorage.setItem('eveningReminderDismissed', new Date().toDateString());
+            document.getElementById('eveningReminderBanner').style.display = 'none';
+        }
+
+        function checkQuickAddVisibility() {
+            const amountInput = document.getElementById('transAmount');
+            const inlineBtn = document.getElementById('quickAddInlineBtn');
+            if (document.activeElement === amountInput || amountInput.value.length > 0) {
+                inlineBtn.style.display = 'flex';
+            } else {
+                setTimeout(() => {
+                    if (document.activeElement !== amountInput && document.getElementById('transAmount').value === '') {
+                        inlineBtn.style.display = 'none';
+                    }
+                }, 200);
+            }
+        }
+
+        function getFormattedMonthKey(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
+        }
+
+        let currentMonth = localStorage.getItem('activeMonth') || getFormattedMonthKey();
+        let audioCtx = null;
+
+        function playFeedback(type) {
+            if (navigator.vibrate) {
+                if (type === 'income') navigator.vibrate([200, 100, 200]);
+                else navigator.vibrate(500);
+            }
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                gain.gain.value = 1.0;
+                osc.frequency.value = type === 'income' ? 880 : 750;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2);
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch (e) {}
+        }
+
+        function updateCategories() {
+            const type = document.getElementById('transType').value;
+            const catSelect = document.getElementById('transCategory');
+            const payModeSelect = document.getElementById('transPaymentMode');
+            catSelect.innerHTML = '';
+
+            if (type === 'income') {
+                let options = ['Rapido/Uber', 'Passenger Fare', 'Freelancing', 'Other'];
+                options.forEach(opt => {
+                    let el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    if (opt === 'Rapido/Uber') el.selected = true;
+                    catSelect.appendChild(el);
+                });
+                payModeSelect.value = 'UPI';
+            } else {
+                let options = ['Rapido/Uber Commission', 'CNG/Petrol', 'Vehicle Maintenance', 'Food', 'Grocery', 'Bill/Rent (Electricity)', 'Other'];
+                options.forEach(opt => {
+                    let el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    if (opt === 'Rapido/Uber Commission') el.selected = true;
+                    catSelect.appendChild(el);
+                });
+                payModeSelect.value = 'UPI';
+            }
+        }
+
+        function onCategoryChange() {
+            const type = document.getElementById('transType').value;
+            const category = document.getElementById('transCategory').value;
+            const payModeSelect = document.getElementById('transPaymentMode');
+
+            if (type === 'income' && category === 'Rapido/Uber') {
+                payModeSelect.value = 'UPI';
+            } else if (type === 'expense' && category === 'Rapido/Uber Commission') {
+                payModeSelect.value = 'UPI';
+            }
+        }
+
+        function getBaseBudget() {
+            return parseFloat(localStorage.getItem('baseBudget_' + currentMonth)) || 0;
+        }
+
+        function saveData() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            localStorage.setItem('udhaarList', JSON.stringify(udhaarList));
+            localStorage.setItem('vehicleReminders', JSON.stringify(vehicleReminders));
+            localStorage.setItem('activeMonth', currentMonth);
+        }
+
+        function setBaseBudget() {
+            const inputVal = parseFloat(document.getElementById('baseBudgetInput').value);
+            if (isNaN(inputVal) || inputVal < 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            localStorage.setItem('baseBudget_' + currentMonth, inputVal);
+            document.getElementById('baseBudgetInput').value = '';
+            saveData();
+            updateUI();
+        }
+
+        function saveTransaction() {
+            const type = document.getElementById('transType').value;
+            const category = document.getElementById('transCategory').value;
+            const paymentMode = document.getElementById('transPaymentMode').value;
+            const title = document.getElementById('transTitle').value.trim() || category;
+            const amount = parseFloat(document.getElementById('transAmount').value);
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please provide a valid positive amount.');
+                return;
+            }
+
+            if (editingId) {
+                const index = transactions.findIndex(t => t.id === editingId);
+                if (index !== -1) {
+                    transactions[index] = { ...transactions[index], type, category, paymentMode, title, amount };
+                }
+                editingId = null;
+            } else {
+                const newTransaction = {
+                    id: Date.now(),
+                    month: currentMonth,
+                    type,
+                    category,
+                    paymentMode,
+                    title,
+                    amount,
+                    date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                };
+                transactions.unshift(newTransaction);
+                playFeedback(type);
+            }
+
+            saveData();
+            cancelEdit();
+            updateUI();
+            document.getElementById('quickAddInlineBtn').style.display = 'none';
+            const amountInput = document.getElementById('transAmount');
+            amountInput.value = '';
+            amountInput.focus();
+        }
+
+        function editTransaction(id) {
+            const t = transactions.find(x => x.id === id);
+            if (!t) return;
+            editingId = id;
+            document.getElementById('transType').value = t.type;
+            updateCategories();
+            document.getElementById('transCategory').value = t.category;
+            document.getElementById('transPaymentMode').value = t.paymentMode || 'Cash';
+            document.getElementById('transTitle').value = t.title;
+            document.getElementById('transAmount').value = t.amount;
+            document.getElementById('actionBtn').innerText = "Update Transaction";
+            document.getElementById('actionBtn').style.backgroundColor = "var(--primary-color)";
+            document.getElementById('formTitle').innerText = "Edit Transaction";
+            document.getElementById('cancelBtn').style.display = "block";
+            document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+            checkQuickAddVisibility();
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            document.getElementById('transTitle').value = '';
+            document.getElementById('transAmount').value = '';
+            document.getElementById('actionBtn').innerText = "Add Transaction";
+            document.getElementById('actionBtn').style.backgroundColor = "var(--success-color)";
+            document.getElementById('formTitle').innerText = "Add Income / Expense";
+            document.getElementById('cancelBtn').style.display = "none";
+            checkQuickAddVisibility();
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('Delete this transaction?')) {
+                transactions = transactions.filter(t => t.id !== id);
+                if (editingId === id) cancelEdit();
+                saveData();
+                updateUI();
+            }
+        }
+
+        function deleteCurrentMonthData() {
+            const totals = getTotals();
+            if (totals.monthTransactions.length === 0 && getBaseBudget() === 0) {
+                alert('No data recorded for this month.');
+                return;
+            }
+            if (confirm(`Are you sure you want to delete all data for ${currentMonth}?`)) {
+                transactions = transactions.filter(t => t.month !== currentMonth);
+                localStorage.removeItem('baseBudget_' + currentMonth);
+                saveData();
+                let availableMonths = Array.from(new Set(transactions.map(t => t.month)));
+                currentMonth = availableMonths.length > 0 ? availableMonths[0] : getFormattedMonthKey();
+                updateUI();
+            }
+        }
+
+        function addNewMonthPrompt() {
+            const nextMonthKey = prompt("Enter new month (Format: YYYY-MM, e.g., 2026-10):", getFormattedMonthKey());
+            if (nextMonthKey && nextMonthKey.trim() !== "") {
+                currentMonth = nextMonthKey.trim();
+                saveData();
+                updateMonthDropdown();
+                updateUI();
+            }
+        }
+
+        function updateMonthDropdown() {
+            const monthSelect = document.getElementById('monthFilter');
+            if (!monthSelect) return;
+            monthSelect.innerHTML = '';
+            let availableMonths = new Set(transactions.map(t => t.month));
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith('baseBudget_')) availableMonths.add(key.replace('baseBudget_', ''));
+            }
+            availableMonths.add(currentMonth);
+            let sortedMonths = Array.from(availableMonths).sort().reverse();
+            sortedMonths.forEach(m => {
+                let el = document.createElement('option');
+                el.value = m;
+                let [y, mo] = m.split('-');
+                let monthName = new Date(y, mo - 1, 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+                el.textContent = monthName;
+                if (m === currentMonth) el.selected = true;
+                monthSelect.appendChild(el);
+            });
+        }
+
+        function changeActiveMonth() {
+            currentMonth = document.getElementById('monthFilter').value;
+            saveData();
+            updateUI();
+        }
+
+        function getTotals() {
+            const monthTransactions = transactions.filter(t => t.month === currentMonth);
+            let totalIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            let totalExpense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            let cashTotal = monthTransactions.filter(t => (t.paymentMode || 'Cash') === 'Cash').reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+            let upiTotal = monthTransactions.filter(t => t.paymentMode === 'UPI').reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+            let base = getBaseBudget();
+            let net = (base + totalIncome) - totalExpense;
+            return { totalIncome, totalExpense, cashTotal, upiTotal, net, monthTransactions };
+        }
+
+        function openKhataModal() { document.getElementById('khataModal').style.display = 'flex'; renderKhataList(); }
+        function closeKhataModal() { document.getElementById('khataModal').style.display = 'none'; }
+        function saveUdhaarEntry() {
+            const person = document.getElementById('khataPerson').value.trim();
+            const type = document.getElementById('khataType').value;
+            const amount = parseFloat(document.getElementById('khataAmount').value);
+            const dueDate = document.getElementById('khataDueDate').value;
+            const notes = document.getElementById('khataNotes').value.trim();
+            if (!person || isNaN(amount) || amount <= 0) { alert('Please enter valid person name and amount.'); return; }
+            udhaarList.unshift({ id: Date.now(), person, type, amount, dueDate, notes, status: 'pending', date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) });
+            saveData();
+            document.getElementById('khataPerson').value = '';
+            document.getElementById('khataAmount').value = '';
+            document.getElementById('khataDueDate').value = '';
+            document.getElementById('khataNotes').value = '';
+            renderKhataList();
+        }
+        function deleteKhata(id) { udhaarList = udhaarList.filter(x => x.id !== id); saveData(); renderKhataList(); }
+        
+        function shareKhataWhatsApp(personName) {
+            const personEntries = udhaarList.filter(x => x.person.toLowerCase() === personName.toLowerCase());
+            if (personEntries.length === 0) return;
+            let totalGiven = 0, totalTaken = 0;
+            let text = `📖 *Udhaar Khata Statement: ${personName}*\n\n`;
+            personEntries.forEach((k, index) => {
+                let typeText = k.type === 'given' ? 'Given (Diya)' : 'Taken (Liya)';
+                if (k.type === 'given') totalGiven += k.amount; else totalTaken += k.amount;
+                text += `${index + 1}. ${k.date} | *${typeText}*: ₹${k.amount.toLocaleString('en-IN')}\n`;
+            });
+            let netBalance = totalGiven - totalTaken;
+            text += `\nNet Balance: ₹${Math.abs(netBalance).toLocaleString('en-IN')} (${netBalance >= 0 ? 'You will get' : 'You will give'})`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        async function downloadKhataPDF(personName) {
+            const personEntries = udhaarList.filter(x => x.person.toLowerCase() === personName.toLowerCase());
+            if (personEntries.length === 0) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let totalGiven = 0, totalTaken = 0;
+            doc.text(`Udhaar Khata Statement: ${personName}`, 14, 20);
+            const tableData = personEntries.map(k => {
+                if (k.type === 'given') totalGiven += k.amount; else totalTaken += k.amount;
+                return [k.date, k.type === 'given' ? 'Given' : 'Taken', `Rs. ${k.amount}`, k.dueDate || 'N/A'];
+            });
+            doc.autoTable({ startY: 30, head: [['Date', 'Type', 'Amount', 'Due Date']], body: tableData });
+            doc.save(`Khata_${personName}.pdf`);
+        }
+
+        function renderKhataList() {
+            const container = document.getElementById('khataListContainer');
+            container.innerHTML = '';
+            if (udhaarList.length === 0) { container.innerHTML = `<div style="text-align:center; color:#6b7280; padding:15px;">No udhaar records found.</div>`; return; }
+            let uniquePersons = [...new Set(udhaarList.map(k => k.person))];
+            uniquePersons.forEach(person => {
+                let personEntries = udhaarList.filter(x => x.person.toLowerCase() === person.toLowerCase());
+                let totalPersonAmt = personEntries.reduce((sum, item) => sum + (item.type === 'given' ? item.amount : -item.amount), 0);
+                let div = document.createElement('div');
+                div.className = 'analytics-item-row';
+                div.style.flexDirection = 'column';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>👤 ${person} (Net: ₹${Math.abs(totalPersonAmt)})</strong>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-icon-btn" onclick="shareKhataWhatsApp('${person}')" style="font-size:0.75rem;">💬</button>
+                            <button class="action-icon-btn" onclick="downloadKhataPDF('${person}')" style="font-size:0.75rem;">📥</button>
+                        </div>
+                    </div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function openVehicleModal() { document.getElementById('vehicleModal').style.display = 'flex'; renderVehicleList(); }
+        function closeVehicleModal() { document.getElementById('vehicleModal').style.display = 'none'; }
+        function saveVehicleReminder() {
+            const title = document.getElementById('vTitle').value.trim();
+            const dueDate = document.getElementById('vDate').value;
+            const dueKm = document.getElementById('vKm').value.trim();
+            if (!title) { alert('Please enter service title.'); return; }
+            vehicleReminders.unshift({ id: Date.now(), title, dueDate, dueKm: dueKm ? dueKm + ' km' : '' });
+            saveData();
+            document.getElementById('vTitle').value = '';
+            document.getElementById('vDate').value = '';
+            document.getElementById('vKm').value = '';
+            renderVehicleList();
+        }
+        function deleteVehicleReminder(id) { vehicleReminders = vehicleReminders.filter(x => x.id !== id); saveData(); renderVehicleList(); }
+        function renderVehicleList() {
+            const container = document.getElementById('vehicleListContainer');
+            container.innerHTML = '';
+            if (vehicleReminders.length === 0) { container.innerHTML = `<div style="text-align:center; color:#6b7280; padding:15px;">No reminders set.</div>`; return; }
+            vehicleReminders.forEach(v => {
+                let div = document.createElement('div');
+                div.className = 'analytics-item-row';
+                div.innerHTML = `<div><strong>${v.title}</strong><br><span style="font-size:0.75rem; color:#6b7280;">Due: ${v.dueDate || 'N/A'} ${v.dueKm ? '• ' + v.dueKm : ''}</span></div><button class="action-icon-btn btn-del" onclick="deleteVehicleReminder(${v.id})" style="font-size:0.75rem;">✕</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        function openCalendarModal() { document.getElementById('calendarModal').style.display = 'flex'; renderCalendarGrid(); }
+        function closeCalendarModal() { document.getElementById('calendarModal').style.display = 'none'; }
+        function renderCalendarGrid() {
+            const grid = document.getElementById('calendarDaysGrid');
+            grid.innerHTML = '';
+            let [year, month] = currentMonth.split('-').map(Number);
+            document.getElementById('calendarMonthTitle').innerText = new Date(year, month - 1, 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+            let firstDayIndex = new Date(year, month - 1, 1).getDay();
+            let totalDays = new Date(year, month, 0).getDate();
+            let monthTrans = transactions.filter(t => t.month === currentMonth);
+            let dailyMap = {};
+            monthTrans.forEach(t => {
+                let dayNum = parseInt(t.date.split(' ')[0]);
+                if (!isNaN(dayNum)) {
+                    if (!dailyMap[dayNum]) dailyMap[dayNum] = { income: 0, expense: 0, items: [] };
+                    if (t.type === 'income') dailyMap[dayNum].income += t.amount; else dailyMap[dayNum].expense += t.amount;
+                    dailyMap[dayNum].items.push(t);
+                }
+            });
+            for (let i = 0; i < firstDayIndex; i++) {
+                let emptyCell = document.createElement('div');
+                emptyCell.className = 'cal-day-cell';
+                emptyCell.style.opacity = '0.3';
+                grid.appendChild(emptyCell);
+            }
+            for (let d = 1; d <= totalDays; d++) {
+                let cell = document.createElement('div');
+                let dayData = dailyMap[d];
+                let net = dayData ? dayData.income - dayData.expense : 0;
+                cell.className = 'cal-day-cell';
+                if (dayData) cell.classList.add(net >= 0 ? 'has-trans' : 'has-loss');
+                cell.innerHTML = `<div style="font-weight:bold;">${d}</div><div style="font-size:0.65rem; color:${net >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">${dayData ? (net >= 0 ? '+' : '') + '₹' + net : ''}</div>`;
+                cell.onclick = () => showCalendarDayDetails(d, dayData);
+                grid.appendChild(cell);
+            }
+        }
+
+        function showCalendarDayDetails(day, dayData) {
+            const detailsEl = document.getElementById('calendarDayDetails');
+            if (!dayData || dayData.items.length === 0) { detailsEl.innerHTML = `<strong>Day ${day}:</strong> No transactions.`; return; }
+            let net = dayData.income - dayData.expense;
+            let html = `<strong>Day ${day} Summary:</strong> Net <span style="color:${net >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">₹${net}</span><ul style="margin-top:6px; list-style:none; max-height:120px; overflow-y:auto;">`;
+            dayData.items.forEach(t => {
+                html += `<li style="font-size:0.8rem; border-bottom:1px solid #f3f4f6; padding:4px 0;">${t.category} (${t.title}): <strong>${t.type === 'income' ? '+' : '-'}₹${t.amount}</strong></li>`;
+            });
+            html += `</ul>`;
+            detailsEl.innerHTML = html;
+        }
+
+        function openAnalyticsModal() { document.getElementById('analyticsModal').style.display = 'flex'; switchAnalyticsTab('daily'); }
+        function closeAnalyticsModal() { document.getElementById('analyticsModal').style.display = 'none'; }
+        function switchAnalyticsTab(tab) {
+            currentAnalyticsTab = tab;
+            ['Daily', 'Weekly', 'Category', 'Income', 'Monthly'].forEach(t => {
+                const btn = document.getElementById(`btn${t}Tab`);
+                if (btn) btn.className = tab === t.toLowerCase() ? 'analytics-tab-btn active' : 'analytics-tab-btn';
+            });
+            const totals = getTotals();
+            if (tab === 'daily') renderDailyAnalytics(totals.monthTransactions);
+            else if (tab === 'weekly') renderWeeklyAnalytics(totals.monthTransactions);
+            else if (tab === 'category') renderCategoryAnalytics(totals.monthTransactions);
+            else if (tab === 'income') renderIncomeCategoryAnalytics(totals.monthTransactions);
+            else renderMonthlyAnalytics();
+        }
+
+        function renderDailyAnalytics(monthTrans) {
+            let dailyMap = {};
+            monthTrans.forEach(t => {
+                let dayKey = t.date.split(',')[0].trim();
+                if (!dailyMap[dayKey]) dailyMap[dayKey] = { income: 0, expense: 0 };
+                if (t.type === 'income') dailyMap[dayKey].income += t.amount; else dailyMap[dayKey].expense += t.amount;
+            });
+            let days = Object.keys(dailyMap), incomes = days.map(d => dailyMap[d].income), expenses = days.map(d => dailyMap[d].expense);
+            document.getElementById('analyticsInsight').innerHTML = `💡 <strong>Daily Trend:</strong> Total active days analyzed.`;
+            renderLineChart(days, incomes, expenses);
+            document.getElementById('analyticsContentList').innerHTML = days.map(d => `<div class="analytics-item-row"><span>${d}</span><span style="color:var(--success-color);">+₹${dailyMap[d].income}</span><span style="color:var(--danger-color);">-₹${dailyMap[d].expense}</span></div>`).join('') || '<div style="text-align:center; color:#6b7280;">No data</div>';
+        }
+
+        function renderWeeklyAnalytics(monthTrans) {
+            let weekMap = { 'Week 1': {income:0, expense:0}, 'Week 2': {income:0, expense:0}, 'Week 3': {income:0, expense:0}, 'Week 4+': {income:0, expense:0} };
+            monthTrans.forEach(t => {
+                let dayNum = parseInt(t.date.split(' ')[0]) || 1;
+                let wKey = dayNum <= 7 ? 'Week 1' : dayNum <= 14 ? 'Week 2' : dayNum <= 21 ? 'Week 3' : 'Week 4+';
+                if (t.type === 'income') weekMap[wKey].income += t.amount; else weekMap[wKey].expense += t.amount;
+            });
+            let weeks = Object.keys(weekMap);
+            renderBarChart(weeks, weeks.map(w => weekMap[w].income), weeks.map(w => weekMap[w].expense));
+            document.getElementById('analyticsContentList').innerHTML = weeks.map(w => `<div class="analytics-item-row"><span>${w}</span><span style="color:var(--success-color);">+₹${weekMap[w].income}</span><span style="color:var(--danger-color);">-₹${weekMap[w].expense}</span></div>`).join('');
+        }
+
+        function renderCategoryAnalytics(monthTrans) {
+            let catMap = {};
+            monthTrans.filter(t => t.type === 'expense').forEach(t => catMap[t.category] = (catMap[t.category] || 0) + t.amount);
+            let cats = Object.keys(catMap), amounts = cats.map(c => catMap[c]);
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+            analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: cats.length ? cats : ['None'], datasets: [{ data: amounts.length ? amounts : [1], backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#4f46e5', '#8b5cf6'] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            document.getElementById('analyticsContentList').innerHTML = cats.map(c => `<div class="analytics-item-row"><span>${c}</span><strong style="color:var(--danger-color);">₹${catMap[c]}</strong></div>`).join('') || '<div style="text-align:center; color:#6b7280;">No expenses</div>';
+        }
+
+        function renderIncomeCategoryAnalytics(monthTrans) {
+            let catMap = {};
+            monthTrans.filter(t => t.type === 'income').forEach(t => catMap[t.category] = (catMap[t.category] || 0) + t.amount);
+            let cats = Object.keys(catMap), amounts = cats.map(c => catMap[c]);
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+            analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: cats.length ? cats : ['None'], datasets: [{ data: amounts.length ? amounts : [1], backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            document.getElementById('analyticsContentList').innerHTML = cats.map(c => `<div class="analytics-item-row"><span>${c}</span><strong style="color:var(--success-color);">+₹${catMap[c]}</strong></div>`).join('') || '<div style="text-align:center; color:#6b7280;">No income</div>';
+        }
+
+        function renderMonthlyAnalytics() {
+            let allMonths = new Set(transactions.map(t => t.month));
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith('baseBudget_')) allMonths.add(key.replace('baseBudget_', ''));
+            }
+            let sortedMonths = Array.from(allMonths).sort();
+            let netBalances = sortedMonths.map(m => {
+                let mTrans = transactions.filter(t => t.month === m);
+                let inc = mTrans.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                let exp = mTrans.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                return (parseFloat(localStorage.getItem('baseBudget_' + m)) || 0) + inc - exp;
+            });
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+            analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: sortedMonths.length ? sortedMonths : [currentMonth], datasets: [{ data: netBalances.length ? netBalances : [getTotals().net], backgroundColor: '#4f46e5' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+            document.getElementById('analyticsContentList').innerHTML = sortedMonths.map((m, i) => `<div class="analytics-item-row"><span>${m}</span><strong style="color:${netBalances[i] >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">₹${netBalances[i]}</strong></div>`).join('');
+        }
+
+        function renderLineChart(labels, incomeData, expenseData) {
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+            analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Income', data: incomeData, borderColor: '#10b981', fill: false }, { label: 'Expense', data: expenseData, borderColor: '#ef4444', fill: false }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function renderBarChart(labels, incomeData, expenseData) {
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+            analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Income', data: incomeData, backgroundColor: '#10b981' }, { label: 'Expense', data: expenseData, backgroundColor: '#ef4444' }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function downloadChartImage() {
+            const a = document.createElement('a');
+            a.href = document.getElementById('analyticsChart').toDataURL('image/png');
+            a.download = `chart_${currentAnalyticsTab}.png`;
+            a.click();
+        }
+
+        function exportBackupJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ transactions, udhaarList, vehicleReminders }, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `backup_${currentMonth}.json`;
+            a.click();
+        }
+
+        function triggerRestore() { document.getElementById('restoreFile').click(); }
+        function importBackupJSON(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.transactions) { transactions = data.transactions; localStorage.setItem('transactions', JSON.stringify(transactions)); }
+                    if (data.udhaarList) { udhaarList = data.udhaarList; localStorage.setItem('udhaarList', JSON.stringify(udhaarList)); }
+                    alert('Restored successfully!');
+                    updateUI();
+                } catch (err) { alert('Invalid file'); }
+            };
+            reader.readAsText(e.target.files[0]);
+        }
+
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const totals = getTotals();
+            doc.text(`Budget Report (${currentMonth})`, 14, 20);
+            doc.autoTable({ startY: 30, head: [['Date', 'Category', 'Mode', 'Title', 'Amount']], body: totals.monthTransactions.map(t => [t.date, t.category, t.paymentMode || 'Cash', t.title, `${t.type === 'income' ? '+' : '-'}Rs. ${t.amount}`]) });
+            doc.save(`Report_${currentMonth}.pdf`);
+        }
+
+        function exportToExcel() {
+            const totals = getTotals();
+            const ws = XLSX.utils.json_to_sheet(totals.monthTransactions.map(t => ({ Date: t.date, Category: t.category, Mode: t.paymentMode || 'Cash', Title: t.title, Amount: t.type === 'income' ? t.amount : -t.amount })));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+            XLSX.writeFile(wb, `Report_${currentMonth}.xlsx`);
+        }
+
+        function shareOnWhatsApp() {
+            const totals = getTotals();
+            let text = `💸 *Budget Report (${currentMonth})*\nNet Balance: ₹${totals.net}\n`;
+            totals.monthTransactions.forEach(t => { text += `• ${t.category}: ${t.type === 'income' ? '+' : '-'}₹${t.amount}\n`; });
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function updateUI() {
+            updateMonthDropdown();
+            const totals = getTotals();
+            let categoryTotals = {};
+            const listEl = document.getElementById('transactionList');
+            listEl.innerHTML = '';
+            totals.monthTransactions.forEach(t => {
+                if (t.type === 'expense') categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+                const li = document.createElement('li');
+                li.className = 'transaction-item';
+                li.innerHTML = `
+                    <div class="t-details">
+                        <div>${t.title}</div>
+                        <div><span class="category-tag">${t.category}</span><span class="mode-tag">${t.paymentMode || 'Cash'}</span></div>
+                        <div>${t.date}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span class="t-amount ${t.type}">${t.type === 'income' ? '+' : '-'}₹${t.amount}</span>
+                        <button class="action-icon-btn btn-edit" onclick="editTransaction(${t.id})">✎</button>
+                        <button class="action-icon-btn btn-del" onclick="deleteTransaction(${t.id})">✕</button>
+                    </div>`;
+                listEl.appendChild(li);
+            });
+
+            const breakdownContainer = document.getElementById('breakdownContainer');
+            const categoryTagsEl = document.getElementById('categoryTags');
+            categoryTagsEl.innerHTML = '';
+            const catKeys = Object.keys(categoryTotals);
+            if (catKeys.length > 0) {
+                breakdownContainer.style.display = 'block';
+                catKeys.forEach(c => {
+                    const badge = document.createElement('div');
+                    badge.className = 'tag-badge';
+                    badge.innerText = `${c}: ₹${categoryTotals[c]}`;
+                    categoryTagsEl.appendChild(badge);
+                });
+            } else {
+                breakdownContainer.style.display = 'none';
+            }
+
+            document.getElementById('displayBaseBudget').innerText = `₹${getBaseBudget()}`;
+            document.getElementById('totalIncome').innerText = `₹${totals.totalIncome}`;
+            document.getElementById('totalExpense').innerText = `₹${totals.totalExpense}`;
+            document.getElementById('cashTotalDisplay').innerText = `₹${totals.cashTotal}`;
+            document.getElementById('upiTotalDisplay').innerText = `₹${totals.upiTotal}`;
+            const netEl = document.getElementById('netBalance');
+            netEl.innerText = `₹${totals.net}`;
+            netEl.style.color = totals.net >= 0 ? '#ffffff' : '#fca5a5';
+        }
+
+        updateCategories();
+        updateUI();
+        checkEveningReminder();
+    </script>
+</body>
+</html>
