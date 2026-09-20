@@ -538,6 +538,9 @@
         </div>
 
         <div class="feature-grid">
+            <button class="feature-btn full-span" id="installAppBtn" onclick="installApp()" style="display: none; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;">
+                📱 Install App (Add to Home Screen)
+            </button>
             <button class="feature-btn full-span" onclick="openAnalyticsModal()">
                 📊 Advanced Analytics & Charts Dashboard
             </button>
@@ -777,6 +780,56 @@
     </div>
 
     <script>
+        // PWA Manifest Dynamic Setup
+        const manifestData = {
+            "name": "Monthly Budget Planner Pro",
+            "short_name": "BudgetPlanner",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#f3f4f6",
+            "theme_color": "#4f46e5",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('installAppBtn');
+            if (installBtn) installBtn.style.display = 'flex';
+        });
+
+        async function installApp() {
+            if (!deferredPrompt) {
+                alert('To add to home screen:\n- Android (Chrome): Tap browser menu (3 dots) -> "Add to Home screen" or "Install App".\n- iPhone (Safari): Tap Share icon -> "Add to Home Screen".');
+                return;
+            }
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            }
+            deferredPrompt = null;
+            document.getElementById('installAppBtn').style.display = 'none';
+        }
+
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App installed successfully');
+            document.getElementById('installAppBtn').style.display = 'none';
+        });
+
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
         let vehicleReminders = JSON.parse(localStorage.getItem('vehicleReminders')) || [];
