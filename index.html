@@ -232,6 +232,13 @@
             border-radius: 6px;
             font-size: 0.8rem;
             font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .tag-badge:hover {
+            background: #dbeafe;
+            transform: translateY(-1px);
         }
 
         .form-section {
@@ -586,7 +593,7 @@
         </div>
 
         <div class="breakdown-card" id="breakdownContainer" style="display: none;">
-            <h3>Category-wise Expenses</h3>
+            <h3>Category-wise Expenses <span style="font-size: 0.75rem; color: #6b7280; font-weight: normal;">(Tap any badge for full details)</span></h3>
             <div class="breakdown-tags" id="categoryTags"></div>
         </div>
 
@@ -776,6 +783,17 @@
 
             <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 8px;">Service & Document Reminders</div>
             <div id="vehicleListContainer" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Category Detailed Breakdown Modal -->
+    <div class="modal-overlay" id="categoryDetailsModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 id="categoryModalTitle" style="font-size: 1.05rem; color: var(--primary-color);">Category Details</h2>
+                <button class="action-icon-btn btn-del" onclick="closeCategoryDetailsModal()">✕</button>
+            </div>
+            <div id="categoryDetailsList" style="max-height: 280px; overflow-y: auto;"></div>
         </div>
     </div>
 
@@ -1101,6 +1119,39 @@
             let base = getBaseBudget();
             let net = (base + totalIncome) - totalExpense;
             return { totalIncome, totalExpense, cashTotal, upiTotal, net, monthTransactions };
+        }
+
+        // Category Drill-Down Detailed View Modal Functions
+        function openCategoryDetails(categoryName) {
+            const totals = getTotals();
+            const catTransactions = totals.monthTransactions.filter(t => t.type === 'expense' && t.category === categoryName);
+            const totalAmt = catTransactions.reduce((sum, t) => sum + t.amount, 0);
+            
+            document.getElementById('categoryModalTitle').innerText = `${categoryName} (Total: ₹${totalAmt})`;
+            const listContainer = document.getElementById('categoryDetailsList');
+            listContainer.innerHTML = '';
+            
+            if (catTransactions.length === 0) {
+                listContainer.innerHTML = `<div style="text-align:center; color:#6b7280; padding:15px;">No transactions found for this category.</div>`;
+            } else {
+                catTransactions.forEach(t => {
+                    let itemDiv = document.createElement('div');
+                    itemDiv.className = 'analytics-item-row';
+                    itemDiv.innerHTML = `
+                        <div>
+                            <strong>${t.title}</strong><br>
+                            <span style="font-size:0.75rem; color:#6b7280;">${t.date} • Mode: ${t.paymentMode || 'Cash'}</span>
+                        </div>
+                        <strong style="color:var(--danger-color);">-₹${t.amount}</strong>
+                    `;
+                    listContainer.appendChild(itemDiv);
+                });
+            }
+            document.getElementById('categoryDetailsModal').style.display = 'flex';
+        }
+
+        function closeCategoryDetailsModal() {
+            document.getElementById('categoryDetailsModal').style.display = 'none';
         }
 
         function openKhataModal() { document.getElementById('khataModal').style.display = 'flex'; renderKhataList(); }
@@ -1445,7 +1496,8 @@
                 catKeys.forEach(c => {
                     const badge = document.createElement('div');
                     badge.className = 'tag-badge';
-                    badge.innerText = `${c}: ₹${categoryTotals[c]}`;
+                    badge.innerText = `${c}: ₹${categoryTotals[c]} 🔍`;
+                    badge.onclick = () => openCategoryDetails(c);
                     categoryTagsEl.appendChild(badge);
                 });
             } else {
