@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Budget Planner Pro - Ultimate Analytics & Fleet Tracker</title>
+    <title>Monthly Budget Planner Pro - Ultimate Analytics</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
@@ -163,6 +163,16 @@
             color: white;
         }
 
+        .card.clickable {
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .card.clickable:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
         .card h3 {
             font-size: 0.82rem;
             color: #6b7280;
@@ -196,6 +206,14 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.04);
             font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .pay-mode-card:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+            border: 1px solid #cbd5e1;
         }
 
         .pay-mode-card span {
@@ -530,7 +548,7 @@
     <div class="container">
         <header>
             <h1><span>💸</span> Monthly Budget Planner</h1>
-            <p style="font-size: 0.85rem; color: #6b7280;">Advanced Income, Fleet & Analytics Dashboard</p>
+            <p style="font-size: 0.85rem; color: #6b7280;">Advanced Income & Analytics Dashboard</p>
         </header>
 
         <div id="eveningReminderBanner" class="reminder-banner" style="display: none;">
@@ -557,9 +575,6 @@
             <button class="feature-btn" onclick="openKhataModal()">
                 📖 Udhaar / Khata Book
             </button>
-            <button class="feature-btn full-span" onclick="openVehicleModal()">
-                🚗 Vehicle Service & Maintenance
-            </button>
         </div>
 
         <div class="dashboard">
@@ -575,18 +590,18 @@
                 <h3>Extra Income</h3>
                 <div class="amount" id="totalIncome" style="color: var(--success-color);">₹0</div>
             </div>
-            <div class="card full-width">
-                <h3>Total Expenses</h3>
+            <div class="card full-width clickable" onclick="openExpenseDetails()" title="Click to view all expenses breakdown">
+                <h3>Total Expenses <span style="font-size: 0.7rem; color: #fecaca;"></span></h3>
                 <div class="amount" id="totalExpense" style="color: var(--danger-color);">₹0</div>
             </div>
         </div>
 
         <div class="payment-breakdown">
-            <div class="pay-mode-card">
+            <div class="pay-mode-card" onclick="openPaymentDetails('Cash')" title="Click to view Cash transactions">
                 <span style="color: #2563eb;">💵 Cash Total</span>
                 <span id="cashTotalDisplay">₹0</span>
             </div>
-            <div class="pay-mode-card">
+            <div class="pay-mode-card" onclick="openPaymentDetails('UPI')" title="Click to view UPI/Digital transactions">
                 <span style="color: #7c3aed;">📱 UPI / Digital</span>
                 <span id="upiTotalDisplay">₹0</span>
             </div>
@@ -757,40 +772,11 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="vehicleModal">
-        <div class="modal-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h2 style="font-size: 1.05rem; color: var(--primary-color);">🚗 Vehicle Maintenance & Reminders</h2>
-                <button class="action-icon-btn btn-del" onclick="closeVehicleModal()">✕</button>
-            </div>
-
-            <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
-                <h3 style="font-size: 0.9rem; margin-bottom: 8px;">Add Maintenance Reminder</h3>
-                <div class="input-group">
-                    <label>Task / Service Name (e.g. Engine Oil Change, PUC, Insurance)</label>
-                    <input type="text" id="vTitle" placeholder="e.g. Engine Oil Change">
-                </div>
-                <div class="input-group">
-                    <label>Due Date</label>
-                    <input type="date" id="vDate">
-                </div>
-                <div class="input-group">
-                    <label>Target KM (Optional)</label>
-                    <input type="number" id="vKm" placeholder="Target Odometer KM">
-                </div>
-                <button class="btn btn-primary" onclick="saveVehicleReminder()">Add Reminder</button>
-            </div>
-
-            <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 8px;">Service & Document Reminders</div>
-            <div id="vehicleListContainer" style="max-height: 200px; overflow-y: auto;"></div>
-        </div>
-    </div>
-
-    <!-- Category Detailed Breakdown Modal -->
+    <!-- Category, Payment & Total Expense Detailed Breakdown Modal -->
     <div class="modal-overlay" id="categoryDetailsModal">
         <div class="modal-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h2 id="categoryModalTitle" style="font-size: 1.05rem; color: var(--primary-color);">Category Details</h2>
+                <h2 id="categoryModalTitle" style="font-size: 1.05rem; color: var(--primary-color);">Details</h2>
                 <button class="action-icon-btn btn-del" onclick="closeCategoryDetailsModal()">✕</button>
             </div>
             <div id="categoryDetailsList" style="max-height: 280px; overflow-y: auto;"></div>
@@ -798,7 +784,6 @@
     </div>
 
     <script>
-        // PWA Manifest Dynamic Setup
         const manifestData = {
             "name": "Monthly Budget Planner Pro",
             "short_name": "BudgetPlanner",
@@ -844,13 +829,11 @@
         }
 
         window.addEventListener('appinstalled', (evt) => {
-            console.log('App installed successfully');
             document.getElementById('installAppBtn').style.display = 'none';
         });
 
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
-        let vehicleReminders = JSON.parse(localStorage.getItem('vehicleReminders')) || [];
         let editingId = null;
         let analyticsChartInstance = null;
         let currentAnalyticsTab = 'daily';
@@ -960,7 +943,6 @@
         function saveData() {
             localStorage.setItem('transactions', JSON.stringify(transactions));
             localStorage.setItem('udhaarList', JSON.stringify(udhaarList));
-            localStorage.setItem('vehicleReminders', JSON.stringify(vehicleReminders));
             localStorage.setItem('activeMonth', currentMonth);
         }
 
@@ -1121,6 +1103,34 @@
             return { totalIncome, totalExpense, cashTotal, upiTotal, net, monthTransactions };
         }
 
+        // Total Expenses Click Action Breakdown Popup
+        function openExpenseDetails() {
+            const totals = getTotals();
+            const expenseTrans = totals.monthTransactions.filter(t => t.type === 'expense');
+            
+            document.getElementById('categoryModalTitle').innerText = `Total Expenses Breakdown (Total: ₹${totals.totalExpense})`;
+            const listContainer = document.getElementById('categoryDetailsList');
+            listContainer.innerHTML = '';
+            
+            if (expenseTrans.length === 0) {
+                listContainer.innerHTML = `<div style="text-align:center; color:#6b7280; padding:15px;">No expense transactions recorded for this month.</div>`;
+            } else {
+                expenseTrans.forEach(t => {
+                    let itemDiv = document.createElement('div');
+                    itemDiv.className = 'analytics-item-row';
+                    itemDiv.innerHTML = `
+                        <div>
+                            <strong>${t.title}</strong><br>
+                            <span style="font-size:0.75rem; color:#6b7280;">Category: ${t.category} • Mode: ${t.paymentMode || 'Cash'} • ${t.date}</span>
+                        </div>
+                        <strong style="color:var(--danger-color);">-₹${t.amount}</strong>
+                    `;
+                    listContainer.appendChild(itemDiv);
+                });
+            }
+            document.getElementById('categoryDetailsModal').style.display = 'flex';
+        }
+
         // Category Drill-Down Detailed View Modal Functions
         function openCategoryDetails(categoryName) {
             const totals = getTotals();
@@ -1143,6 +1153,35 @@
                             <span style="font-size:0.75rem; color:#6b7280;">${t.date} • Mode: ${t.paymentMode || 'Cash'}</span>
                         </div>
                         <strong style="color:var(--danger-color);">-₹${t.amount}</strong>
+                    `;
+                    listContainer.appendChild(itemDiv);
+                });
+            }
+            document.getElementById('categoryDetailsModal').style.display = 'flex';
+        }
+
+        // Payment Mode Detailed Breakdown Modal Function
+        function openPaymentDetails(mode) {
+            const totals = getTotals();
+            const modeTransactions = totals.monthTransactions.filter(t => (t.paymentMode || 'Cash') === mode);
+            const netAmt = modeTransactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+            
+            document.getElementById('categoryModalTitle').innerText = `${mode} Transactions Breakdown (Net: ₹${netAmt})`;
+            const listContainer = document.getElementById('categoryDetailsList');
+            listContainer.innerHTML = '';
+            
+            if (modeTransactions.length === 0) {
+                listContainer.innerHTML = `<div style="text-align:center; color:#6b7280; padding:15px;">No transactions found for ${mode}.</div>`;
+            } else {
+                modeTransactions.forEach(t => {
+                    let itemDiv = document.createElement('div');
+                    itemDiv.className = 'analytics-item-row';
+                    itemDiv.innerHTML = `
+                        <div>
+                            <strong>${t.title}</strong><br>
+                            <span style="font-size:0.75rem; color:#6b7280;">Category: ${t.category} • ${t.date}</span>
+                        </div>
+                        <strong style="color:${t.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)'};">${t.type === 'income' ? '+' : '-'}₹${t.amount}</strong>
                     `;
                     listContainer.appendChild(itemDiv);
                 });
@@ -1193,12 +1232,8 @@
             if (personEntries.length === 0) return;
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            let totalGiven = 0, totalTaken = 0;
             doc.text(`Udhaar Khata Statement: ${personName}`, 14, 20);
-            const tableData = personEntries.map(k => {
-                if (k.type === 'given') totalGiven += k.amount; else totalTaken += k.amount;
-                return [k.date, k.type === 'given' ? 'Given' : 'Taken', `Rs. ${k.amount}`, k.dueDate || 'N/A'];
-            });
+            const tableData = personEntries.map(k => [k.date, k.type === 'given' ? 'Given' : 'Taken', `Rs. ${k.amount}`, k.dueDate || 'N/A']);
             doc.autoTable({ startY: 30, head: [['Date', 'Type', 'Amount', 'Due Date']], body: tableData });
             doc.save(`Khata_${personName}.pdf`);
         }
@@ -1222,33 +1257,6 @@
                             <button class="action-icon-btn" onclick="downloadKhataPDF('${person}')" style="font-size:0.75rem;">📥</button>
                         </div>
                     </div>`;
-                container.appendChild(div);
-            });
-        }
-
-        function openVehicleModal() { document.getElementById('vehicleModal').style.display = 'flex'; renderVehicleList(); }
-        function closeVehicleModal() { document.getElementById('vehicleModal').style.display = 'none'; }
-        function saveVehicleReminder() {
-            const title = document.getElementById('vTitle').value.trim();
-            const dueDate = document.getElementById('vDate').value;
-            const dueKm = document.getElementById('vKm').value.trim();
-            if (!title) { alert('Please enter service title.'); return; }
-            vehicleReminders.unshift({ id: Date.now(), title, dueDate, dueKm: dueKm ? dueKm + ' km' : '' });
-            saveData();
-            document.getElementById('vTitle').value = '';
-            document.getElementById('vDate').value = '';
-            document.getElementById('vKm').value = '';
-            renderVehicleList();
-        }
-        function deleteVehicleReminder(id) { vehicleReminders = vehicleReminders.filter(x => x.id !== id); saveData(); renderVehicleList(); }
-        function renderVehicleList() {
-            const container = document.getElementById('vehicleListContainer');
-            container.innerHTML = '';
-            if (vehicleReminders.length === 0) { container.innerHTML = `<div style="text-align:center; color:#6b7280; padding:15px;">No reminders set.</div>`; return; }
-            vehicleReminders.forEach(v => {
-                let div = document.createElement('div');
-                div.className = 'analytics-item-row';
-                div.innerHTML = `<div><strong>${v.title}</strong><br><span style="font-size:0.75rem; color:#6b7280;">Due: ${v.dueDate || 'N/A'} ${v.dueKm ? '• ' + v.dueKm : ''}</span></div><button class="action-icon-btn btn-del" onclick="deleteVehicleReminder(${v.id})" style="font-size:0.75rem;">✕</button>`;
                 container.appendChild(div);
             });
         }
@@ -1417,7 +1425,7 @@
         }
 
         function exportBackupJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ transactions, udhaarList, vehicleReminders }, null, 2));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ transactions, udhaarList }, null, 2));
             const a = document.createElement('a');
             a.href = dataStr;
             a.download = `backup_${currentMonth}.json`;
@@ -1443,23 +1451,98 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const totals = getTotals();
-            doc.text(`Budget Report (${currentMonth})`, 14, 20);
-            doc.autoTable({ startY: 30, head: [['Date', 'Category', 'Mode', 'Title', 'Amount']], body: totals.monthTransactions.map(t => [t.date, t.category, t.paymentMode || 'Cash', t.title, `${t.type === 'income' ? '+' : '-'}Rs. ${t.amount}`]) });
-            doc.save(`Report_${currentMonth}.pdf`);
+            const baseBudget = getBaseBudget();
+
+            doc.setFontSize(16);
+            doc.setTextColor(79, 70, 229);
+            doc.text(`Monthly Budget Report (${currentMonth})`, 14, 20);
+
+            doc.setFontSize(10);
+            doc.setTextColor(55, 65, 81);
+            doc.text(`Base Budget: Rs. ${baseBudget}`, 14, 28);
+            doc.text(`Extra Income: Rs. ${totals.totalIncome}`, 14, 34);
+            doc.text(`Total Expenses: Rs. ${totals.totalExpense}`, 14, 40);
+            doc.text(`Cash Balance (Net): Rs. ${totals.cashTotal}`, 110, 28);
+            doc.text(`UPI/Digital Balance (Net): Rs. ${totals.upiTotal}`, 110, 34);
+            doc.text(`Net Balance: Rs. ${totals.net}`, 110, 40);
+
+            const tableData = totals.monthTransactions.map(t => [
+                t.date,
+                t.type.toUpperCase(),
+                t.category,
+                t.paymentMode || 'Cash',
+                t.title,
+                `${t.type === 'income' ? '+' : '-'}Rs. ${t.amount}`
+            ]);
+
+            doc.autoTable({
+                startY: 48,
+                head: [['Date', 'Type', 'Category', 'Mode', 'Title', 'Amount']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229] }
+            });
+
+            doc.save(`Budget_Report_${currentMonth}.pdf`);
         }
 
         function exportToExcel() {
             const totals = getTotals();
-            const ws = XLSX.utils.json_to_sheet(totals.monthTransactions.map(t => ({ Date: t.date, Category: t.category, Mode: t.paymentMode || 'Cash', Title: t.title, Amount: t.type === 'income' ? t.amount : -t.amount })));
+            const baseBudget = getBaseBudget();
+
+            const summaryData = [
+                { Date: '--- FINANCIAL SUMMARY ---', Type: '', Category: '', Mode: '', Title: '', Amount: '' },
+                { Date: 'Active Month', Type: '', Category: currentMonth, Mode: '', Title: '', Amount: '' },
+                { Date: 'Base Budget', Type: '', Category: '', Mode: '', Title: '', Amount: baseBudget },
+                { Date: 'Total Extra Income', Type: '', Category: '', Mode: '', Title: '', Amount: totals.totalIncome },
+                { Date: 'Total Expenses', Type: '', Category: '', Mode: '', Title: '', Amount: totals.totalExpense },
+                { Date: 'Cash Net Balance', Type: '', Category: '', Mode: '', Title: '', Amount: totals.cashTotal },
+                { Date: 'UPI Net Balance', Type: '', Category: '', Mode: '', Title: '', Amount: totals.upiTotal },
+                { Date: 'Final Net Balance', Type: '', Category: '', Mode: '', Title: '', Amount: totals.net },
+                { Date: '', Type: '', Category: '', Mode: '', Title: '', Amount: '' },
+                { Date: '--- TRANSACTION LIST ---', Type: '', Category: '', Mode: '', Title: '', Amount: '' }
+            ];
+
+            const transData = totals.monthTransactions.map(t => ({
+                Date: t.date,
+                Type: t.type.toUpperCase(),
+                Category: t.category,
+                Mode: t.paymentMode || 'Cash',
+                Title: t.title,
+                Amount: t.type === 'income' ? t.amount : -t.amount
+            }));
+
+            const combinedData = [...summaryData, ...transData];
+            const ws = XLSX.utils.json_to_sheet(combinedData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
-            XLSX.writeFile(wb, `Report_${currentMonth}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, 'Budget Report');
+            XLSX.writeFile(wb, `Budget_Report_${currentMonth}.xlsx`);
         }
 
         function shareOnWhatsApp() {
             const totals = getTotals();
-            let text = `💸 *Budget Report (${currentMonth})*\nNet Balance: ₹${totals.net}\n`;
-            totals.monthTransactions.forEach(t => { text += `• ${t.category}: ${t.type === 'income' ? '+' : '-'}₹${t.amount}\n`; });
+            const baseBudget = getBaseBudget();
+            let text = `📊 *Monthly Budget Report (${currentMonth})*\n\n`;
+            text += `💰 *Summary:*\n`;
+            text += `• Base Budget: ₹${baseBudget.toLocaleString('en-IN')}\n`;
+            text += `• Extra Income: ₹${totals.totalIncome.toLocaleString('en-IN')}\n`;
+            text += `• Total Expenses: ₹${totals.totalExpense.toLocaleString('en-IN')}\n`;
+            text += `• Net Balance: ₹${totals.net.toLocaleString('en-IN')}\n\n`;
+            text += `💳 *Payment Mode Breakdown:*\n`;
+            text += `• Cash Net: ₹${totals.cashTotal.toLocaleString('en-IN')}\n`;
+            text += `• UPI / Digital Net: ₹${totals.upiTotal.toLocaleString('en-IN')}\n\n`;
+            text += `📝 *Transactions List (${totals.monthTransactions.length}):*\n`;
+            
+            if (totals.monthTransactions.length === 0) {
+                text += `No transactions recorded for this month.\n`;
+            } else {
+                totals.monthTransactions.forEach((t, i) => {
+                    let sign = t.type === 'income' ? '+' : '-';
+                    text += `${i + 1}. ${t.date} | *${t.category}* (${t.paymentMode || 'Cash'})\n`;
+                    text += `   ${t.title}: ${sign}₹${t.amount.toLocaleString('en-IN')}\n`;
+                });
+            }
+            
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
         }
 
