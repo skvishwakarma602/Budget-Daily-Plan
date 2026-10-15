@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Budget Planner Pro - Ultimate Analytics</title>
+    <title>Monthly Budget Planner Pro - Firebase Edition</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+
+    <!-- Firebase SDK CDN (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -89,6 +93,13 @@
             cursor: pointer;
             font-size: 0.9rem;
             box-shadow: var(--shadow);
+        }
+
+        .sync-status {
+            font-size: 0.75rem;
+            color: var(--success-color);
+            margin-bottom: 8px;
+            font-weight: bold;
         }
 
         .reminder-banner {
@@ -626,7 +637,8 @@
         <header>
             <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark/Light Mode">🌙 Dark</button>
             <h1><span>💸</span> Monthly Budget Planner</h1>
-            <p style="font-size: 0.85rem; color: #9ca3af;">Advanced Income & Analytics Dashboard</p>
+            <p style="font-size: 0.85rem; color: #9ca3af;">Firebase Cloud Edition</p>
+            <div id="syncStatus" class="sync-status">Connecting to Firebase...</div>
         </header>
 
         <div id="eveningReminderBanner" class="reminder-banner" style="display: none;">
@@ -637,7 +649,7 @@
         <div class="month-bar">
             <label for="monthFilter">Active Month:</label>
             <select id="monthFilter" onchange="changeActiveMonth()"></select>
-            <button class="action-icon-btn btn-del" onclick="deleteCurrentMonthData()" title="Delete Current Month" style="font-size: 0.80rem; font-weight: bold; padding: 6px 8px;">🗑️ Delete</button>
+            <button class="action-icon-btn btn-del" onclick="deleteCurrentMonthData()" title="Delete Current Month Data from Cloud" style="font-size: 0.80rem; font-weight: bold; padding: 6px 8px;">🗑️ Delete Month</button>
         </div>
 
         <div class="feature-grid">
@@ -863,7 +875,6 @@
         </div>
     </div>
 
-    <!-- Category, Payment & Total Expense Detailed Breakdown Modal -->
     <div class="modal-overlay" id="categoryDetailsModal">
         <div class="modal-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -875,6 +886,23 @@
     </div>
 
     <script>
+        // ================= FIREBASE CONFIGURATION =================
+        // Apni Firebase Console se li gayi details yahan daalein:
+        const firebaseConfig = {
+            apiKey: "AIzaSyDdruN31NeSxw16zKVBQN15LJfL_wYhPe8",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL:
+"https://monthly-budget-planner-new-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "monthly-budget-planner-new",
+            storageBucket: "monthly-budget-planner-new.firebasestorage.app",
+            messagingSenderId: "870398619862",
+            appId: "1:870398619862:web:38dc963ec8c968bfc45977"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         const manifestData = {
             "name": "Monthly Budget Planner Pro",
             "short_name": "BudgetPlanner",
@@ -916,7 +944,6 @@
             document.getElementById('installAppBtn').style.display = 'none';
         }
 
-        // Theme Switcher Logic
         function toggleTheme() {
             const body = document.body;
             const currentTheme = body.getAttribute('data-theme');
@@ -933,11 +960,95 @@
             if(btn) btn.innerText = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
         });
 
-        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-        let udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
+        let transactions = [];
+        let udhaarList = [];
+        let settings = {};
         let editingId = null;
         let analyticsChartInstance = null;
         let currentAnalyticsTab = 'daily';
+
+        function getFormattedMonthKey(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
+        }
+
+        let currentMonth = localStorage.getItem('activeMonth') || getFormattedMonthKey();
+
+        // Load Data from Firebase & Auto-Migrate LocalStorage Data if empty
+        function initFirebaseData() {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.innerText = "Connecting to Firebase Database...";
+
+            database.ref('/').once('value').then(snapshot => {
+                const cloudData = snapshot.val();
+                if (cloudData) {
+                    transactions = cloudData.transactions || [];
+                    udhaarList = cloudData.udhaarList || [];
+                    settings = cloudData.settings || {};
+                    
+                    // Sync settings to localStorage for base budgets
+                    for (let key in settings) {
+                        localStorage.setItem(key, settings[key]);
+                    }
+                    statusEl.innerText = "🟢 Connected to Firebase (Synced)";
+                } else {
+                    // Migration: If Firebase is empty, push existing localStorage data to Firebase
+                    statusEl.innerText = "⏳ Migrating local data to Firebase...";
+                    transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+                    udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
+                    
+                    let localSettings = {};
+                    for (let i = 0; i < localStorage.length; i++) {
+                        let key = localStorage.key(i);
+                        if (key.startsWith('baseBudget_') || key === 'activeMonth') {
+                            localSettings[key] = localStorage.getItem(key);
+                        }
+                    }
+                    settings = localSettings;
+                    saveToFirebase();
+                    statusEl.innerText = "🟢 Migration Complete & Connected to Firebase";
+                }
+                updateCategories();
+                updateUI();
+                checkEveningReminder();
+            }).catch(err => {
+                statusEl.innerText = "🔴 Firebase Connection Failed. Using Local Data.";
+                statusEl.style.color = "var(--danger-color)";
+                transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+                udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
+                updateCategories();
+                updateUI();
+            });
+        }
+
+        function saveToFirebase() {
+            let localSettings = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith('baseBudget_') || key === 'activeMonth') {
+                    localSettings[key] = localStorage.getItem(key);
+                }
+            }
+            settings = localSettings;
+
+            database.ref('/').set({
+                transactions: transactions,
+                udhaarList: udhaarList,
+                settings: settings
+            }).then(() => {
+                document.getElementById('syncStatus').innerText = "🟢 Synced with Firebase";
+            }).catch(err => {
+                document.getElementById('syncStatus').innerText = "🔴 Sync Error";
+            });
+        }
+
+        function saveData() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            localStorage.setItem('udhaarList', JSON.stringify(udhaarList));
+            localStorage.setItem('activeMonth', currentMonth);
+            saveToFirebase();
+        }
 
         function checkEveningReminder() {
             const lastDismissed = localStorage.getItem('eveningReminderDismissed');
@@ -966,15 +1077,6 @@
                 }, 200);
             }
         }
-
-        function getFormattedMonthKey(date = new Date()) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            return `${year}-${month}`;
-        }
-
-        let currentMonth = localStorage.getItem('activeMonth') || getFormattedMonthKey();
-        let audioCtx = null;
 
         function playFeedback(type) {
             if (navigator.vibrate) {
@@ -1026,12 +1128,6 @@
 
         function getBaseBudget() {
             return parseFloat(localStorage.getItem('baseBudget_' + currentMonth)) || 0;
-        }
-
-        function saveData() {
-            localStorage.setItem('transactions', JSON.stringify(transactions));
-            localStorage.setItem('udhaarList', JSON.stringify(udhaarList));
-            localStorage.setItem('activeMonth', currentMonth);
         }
 
         function setBaseBudget() {
@@ -1126,19 +1222,21 @@
             }
         }
 
+        // Monthly-wise Delete function (Deletes current month data from Firebase and local storage)
         function deleteCurrentMonthData() {
             const totals = getTotals();
             if (totals.monthTransactions.length === 0 && getBaseBudget() === 0) {
                 alert('No data recorded for this month.');
                 return;
             }
-            if (confirm(`Are you sure you want to delete all data for ${currentMonth}?`)) {
+            if (confirm(`Are you sure you want to delete all transactions and budget for ${currentMonth} from Cloud Database?`)) {
                 transactions = transactions.filter(t => t.month !== currentMonth);
                 localStorage.removeItem('baseBudget_' + currentMonth);
                 saveData();
                 let availableMonths = Array.from(new Set(transactions.map(t => t.month)));
                 currentMonth = availableMonths.length > 0 ? availableMonths[0] : getFormattedMonthKey();
                 updateUI();
+                alert(`Data for ${currentMonth} deleted successfully.`);
             }
         }
 
@@ -1279,6 +1377,7 @@
 
         function openKhataModal() { document.getElementById('khataModal').style.display = 'flex'; renderKhataList(); }
         function closeKhataModal() { document.getElementById('khataModal').style.display = 'none'; }
+        
         function saveUdhaarEntry() {
             const person = document.getElementById('khataPerson').value.trim();
             const type = document.getElementById('khataType').value;
@@ -1346,6 +1445,7 @@
 
         function openCalendarModal() { document.getElementById('calendarModal').style.display = 'flex'; renderCalendarGrid(); }
         function closeCalendarModal() { document.getElementById('calendarModal').style.display = 'none'; }
+        
         function renderCalendarGrid() {
             const grid = document.getElementById('calendarDaysGrid');
             grid.innerHTML = '';
@@ -1395,6 +1495,7 @@
 
         function openAnalyticsModal() { document.getElementById('analyticsModal').style.display = 'flex'; switchAnalyticsTab('daily'); }
         function closeAnalyticsModal() { document.getElementById('analyticsModal').style.display = 'none'; }
+        
         function switchAnalyticsTab(tab) {
             currentAnalyticsTab = tab;
             ['Daily', 'Weekly', 'Category', 'Income', 'Monthly'].forEach(t => {
@@ -1521,9 +1622,10 @@
             reader.onload = function(event) {
                 try {
                     const data = JSON.parse(event.target.result);
-                    if (data.transactions) { transactions = data.transactions; localStorage.setItem('transactions', JSON.stringify(transactions)); }
-                    if (data.udhaarList) { udhaarList = data.udhaarList; localStorage.setItem('udhaarList', JSON.stringify(udhaarList)); }
-                    alert('Restored successfully!');
+                    if (data.transactions) { transactions = data.transactions; }
+                    if (data.udhaarList) { udhaarList = data.udhaarList; }
+                    saveData();
+                    alert('Restored successfully and synced to Firebase!');
                     updateUI();
                 } catch (err) { alert('Invalid file'); }
             };
@@ -1636,7 +1738,6 @@
             const listEl = document.getElementById('transactionList');
             listEl.innerHTML = '';
 
-            // Filter & Search Logic
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             const sortOrder = document.getElementById('sortSelect').value;
 
@@ -1646,7 +1747,6 @@
                 t.date.toLowerCase().includes(searchQuery)
             );
 
-            // Updated Sorting Logic separating Expense and Income
             filteredTransactions.sort((a, b) => {
                 if (sortOrder === 'newest') return b.id - a.id;
                 if (sortOrder === 'oldest') return a.id - b.id;
@@ -1718,9 +1818,10 @@
             netEl.style.color = totals.net >= 0 ? (savedTheme === 'dark' ? '#f8fafc' : '#ffffff') : '#f87171';
         }
 
-        updateCategories();
-        updateUI();
-        checkEveningReminder();
+        // Initialize App with Firebase on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initFirebaseData();
+        });
     </script>
 </body>
 </html>
