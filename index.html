@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Budget Planner Pro - High Speed Firebase Edition</title>
+    <title>Monthly Budget Planner Pro - Clean Month-wise Edition</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
-    <!-- Firebase SDK CDN (Compat) -->
+    <!-- Firebase SDK CDN (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
@@ -623,8 +623,8 @@
         <header>
             <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark/Light Mode">🌙 Dark</button>
             <h1><span>💸</span> Monthly Budget Planner</h1>
-            <p style="font-size: 0.85rem; color: #9ca3af;">High-Speed Monthly Firebase Edition</p>
-            <div id="syncStatus" class="sync-status">⚡ Initializing...</div>
+            <p style="font-size: 0.85rem; color: #9ca3af;">High-Speed Monthly Pro Edition</p>
+            <div id="syncStatus" class="sync-status">⚡ App Ready</div>
         </header>
 
         <div id="eveningReminderBanner" class="reminder-banner" style="display: none;">
@@ -635,7 +635,7 @@
         <div class="month-bar">
             <label for="monthFilter">Active Month:</label>
             <select id="monthFilter" onchange="changeActiveMonth()"></select>
-            <button class="action-icon-btn btn-del" onclick="deleteCurrentMonthData()" title="Delete Current Month Data from Cloud" style="font-size: 0.80rem; font-weight: bold; padding: 6px 8px;">🗑️ Delete Month</button>
+            <button class="action-icon-btn btn-del" onclick="deleteCurrentMonthData()" title="Delete Current Month Data" style="font-size: 0.80rem; font-weight: bold; padding: 6px 8px;">🗑️ Delete Month</button>
         </div>
 
         <div class="feature-grid">
@@ -656,30 +656,30 @@
         <div class="dashboard">
             <div class="card full-width">
                 <h3>Net Balance</h3>
-                <div class="amount" id="netBalance">₹0</div>
+                <div class="amount" id="netBalance">₹0.00</div>
             </div>
             <div class="card">
                 <h3>Base Budget</h3>
-                <div class="amount" id="displayBaseBudget" style="color: #c7d2fe;">₹0</div>
+                <div class="amount" id="displayBaseBudget" style="color: #c7d2fe;">₹0.00</div>
             </div>
             <div class="card">
                 <h3>Extra Income</h3>
-                <div class="amount" id="totalIncome" style="color: var(--success-color);">₹0</div>
+                <div class="amount" id="totalIncome" style="color: var(--success-color);">₹0.00</div>
             </div>
             <div class="card full-width clickable" onclick="openExpenseDetails()" title="Click to view all expenses breakdown">
                 <h3>Total Expenses</h3>
-                <div class="amount" id="totalExpense" style="color: var(--danger-color);">₹0</div>
+                <div class="amount" id="totalExpense" style="color: var(--danger-color);">₹0.00</div>
             </div>
         </div>
 
         <div class="payment-breakdown">
             <div class="pay-mode-card" onclick="openPaymentDetails('Cash')" title="Click to view Cash transactions">
                 <span style="color: #2563eb;">💵 Cash Total</span>
-                <span id="cashTotalDisplay">₹0</span>
+                <span id="cashTotalDisplay">₹0.00</span>
             </div>
             <div class="pay-mode-card" onclick="openPaymentDetails('UPI')" title="Click to view UPI/Digital transactions">
                 <span style="color: #7c3aed;">📱 UPI / Digital</span>
-                <span id="upiTotalDisplay">₹0</span>
+                <span id="upiTotalDisplay">₹0.00</span>
             </div>
         </div>
 
@@ -691,7 +691,7 @@
         <div class="form-section">
             <h2>Set Monthly Base Amount</h2>
             <div class="input-group">
-                <input type="number" id="baseBudgetInput" placeholder="Enter starting monthly amount" onkeydown="if(event.key === 'Enter') setBaseBudget()">
+                <input type="number" step="any" id="baseBudgetInput" placeholder="Enter starting monthly amount" onkeydown="if(event.key === 'Enter') setBaseBudget()">
             </div>
             <button class="btn btn-primary" onclick="setBaseBudget()">Update Base Budget</button>
         </div>
@@ -723,7 +723,7 @@
 
             <div class="input-group">
                 <label for="transAmount">Amount (₹)</label>
-                <input type="number" id="transAmount" placeholder="Enter amount" onfocus="checkQuickAddVisibility()" oninput="checkQuickAddVisibility()" onblur="checkQuickAddVisibility()" onkeydown="if(event.key === 'Enter') saveTransaction()">
+                <input type="number" step="any" id="transAmount" placeholder="Enter amount" onfocus="checkQuickAddVisibility()" oninput="checkQuickAddVisibility()" onblur="checkQuickAddVisibility()" onkeydown="if(event.key === 'Enter') saveTransaction()">
             </div>
 
             <div class="input-group">
@@ -760,8 +760,8 @@
             </div>
 
             <div class="export-section">
-                <button class="btn btn-backup" onclick="exportBackupJSON()">💾 Backup Data</button>
-                <button class="btn btn-restore" onclick="triggerRestore()">📂 Upload Monthly JSON / Restore</button>
+                <button class="btn btn-backup" onclick="exportBackupJSON()">💾 Backup Active Month</button>
+                <button class="btn btn-restore" onclick="triggerRestore()">📂 Import / Restore JSON</button>
                 <input type="file" id="restoreFile" style="display: none;" accept=".json" onchange="importMonthlyJSON(event)">
             </div>
             
@@ -843,7 +843,7 @@
                 </div>
                 <div class="input-group">
                     <label>Amount (₹)</label>
-                    <input type="number" id="khataAmount" placeholder="Enter amount">
+                    <input type="number" step="any" id="khataAmount" placeholder="Enter amount">
                 </div>
                 <div class="input-group">
                     <label>Due Date / Return Date</label>
@@ -872,27 +872,26 @@
     </div>
 
     <script>
-        // ================= FIREBASE CONFIGURATION =================
         const firebaseConfig = {
             apiKey: "AIzaSyDdruN31NeSxw16zKVBQN15LJfL_wYhPe8",
-            authDomain: "monthly-budget-planner-new.firebaseapp.com",
-            databaseURL: "https://monthly-budget-planner-new-default-rtdb.asia-southeast1.firebasedatabase.app",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL:
+"https://monthly-budget-planner-new-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "monthly-budget-planner-new",
             storageBucket: "monthly-budget-planner-new.firebasestorage.app",
             messagingSenderId: "870398619862",
             appId: "1:870398619862:web:38dc963ec8c968bfc45977"
         };
 
-        // Initialize Firebase safely with fallback
-        try {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
+        let database = null;
+        if (firebaseConfig.apiKey && firebaseConfig.databaseURL) {
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+            } catch (e) {
+                console.warn("Firebase initialize skipped:", e);
             }
-        } catch (e) {
-            console.error("Firebase init error:", e);
         }
-        
-        const database = firebase.database ? firebase.database() : null;
 
         let transactions = [];
         let udhaarList = [];
@@ -909,35 +908,81 @@
 
         let currentMonth = localStorage.getItem('activeMonth') || getFormattedMonthKey();
 
-        // High-Speed Data Loader with Fallback
+        // Helper: Extract month key 'YYYY-MM' from transaction date string if missing
+        function extractMonthFromDate(dateStr) {
+            if (!dateStr) return currentMonth;
+            const monthMap = { 'Jan':'01', 'Feb':'02', 'Mar':'03', 'Apr':'04', 'May':'05', 'Jun':'06', 'Jul':'07', 'Aug':'08', 'Sep':'09', 'Oct':'10', 'Nov':'11', 'Dec':'12' };
+            for (let mName in monthMap) {
+                if (dateStr.includes(mName)) {
+                    let yearMatch = dateStr.match(/\b20\d{2}\b/);
+                    let year = yearMatch ? yearMatch[0] : '2026';
+                    return `${year}-${monthMap[mName]}`;
+                }
+            }
+            return currentMonth;
+        }
+
+        // Automatic Month Un-clustering Engine
+        function cleanAndUnclusterData(rawTransList) {
+            if (!Array.isArray(rawTransList)) return;
+            
+            let groupedMap = {};
+            rawTransList.forEach(t => {
+                let mKey = t.month || extractMonthFromDate(t.date);
+                t.month = mKey;
+                if (!groupedMap[mKey]) groupedMap[mKey] = [];
+                groupedMap[mKey].push(t);
+            });
+
+            for (let mKey in groupedMap) {
+                localStorage.setItem('transactions_' + mKey, JSON.stringify(groupedMap[mKey]));
+                if (database) {
+                    database.ref(`months/${mKey}/transactions`).set(groupedMap[mKey]).catch(() => {});
+                }
+            }
+
+            // Cleanup old general unseparated storage
+            localStorage.removeItem('transactions');
+        }
+
         function loadMonthData(monthKey) {
             const statusEl = document.getElementById('syncStatus');
             statusEl.innerText = `⚡ Loading ${monthKey}...`;
+
+            // Auto Un-cluster old legacy merged data from local storage if present
+            let oldLegacyTrans = JSON.parse(localStorage.getItem('transactions'));
+            if (oldLegacyTrans) cleanAndUnclusterData(oldLegacyTrans);
 
             if (!database) {
                 fallbackLocalLoad(monthKey);
                 return;
             }
 
-            Promise.all([
-                database.ref('months').once('value').catch(() => null),
-                database.ref('udhaarList').once('value').catch(() => null),
-                database.ref('metadata/months').once('value').catch(() => null)
+            let timeoutPromise = new Promise((_, reject) => setTimeout(() => reject('Timeout'), 3000));
+            
+            Promise.race([
+                Promise.all([
+                    database.ref('months').once('value').catch(() => null),
+                    database.ref('udhaarList').once('value').catch(() => null),
+                    database.ref('metadata/months').once('value').catch(() => null)
+                ]),
+                timeoutPromise
             ]).then(([monthsSnap, udhaarSnap, metaSnap]) => {
                 let allMonthsData = monthsSnap ? monthsSnap.val() || {} : {};
                 let metaMonths = metaSnap ? metaSnap.val() || [] : [];
                 
                 availableMonthsList = Array.from(new Set([...Object.keys(allMonthsData), ...metaMonths, currentMonth])).sort().reverse();
-                
                 udhaarList = udhaarSnap ? udhaarSnap.val() || [] : [];
                 
                 let monthNode = allMonthsData[monthKey] || {};
                 transactions = monthNode.transactions || [];
                 
+                // Ensure active month data is filtered correctly
+                transactions = transactions.filter(t => !t.month || t.month === monthKey);
+
                 if (monthNode.baseBudget !== undefined) {
                     localStorage.setItem('baseBudget_' + monthKey, monthNode.baseBudget);
                 } else if (transactions.length === 0) {
-                    // Fallback to local storage if empty in cloud
                     let localTrans = JSON.parse(localStorage.getItem('transactions_' + monthKey));
                     if (localTrans) transactions = localTrans;
                 }
@@ -945,7 +990,7 @@
                 updateMonthDropdown();
                 updateCategories();
                 updateUI();
-                statusEl.innerText = "🟢 Connected & Fast Synced";
+                statusEl.innerText = "🟢 Connected & Month Synced";
             }).catch(err => {
                 fallbackLocalLoad(monthKey);
             });
@@ -953,19 +998,25 @@
 
         function fallbackLocalLoad(monthKey) {
             const statusEl = document.getElementById('syncStatus');
-            statusEl.innerText = "🟡 Offline Mode (Local Storage)";
-            statusEl.style.color = "var(--warning-color)";
+            statusEl.innerText = "⚡ Ready (Local Month Storage)";
+            statusEl.style.color = "var(--primary-color)";
             
-            transactions = JSON.parse(localStorage.getItem('transactions_' + monthKey)) || JSON.parse(localStorage.getItem('transactions')) || [];
+            transactions = JSON.parse(localStorage.getItem('transactions_' + monthKey)) || [];
             udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
-            availableMonthsList = [currentMonth];
             
+            let localMonths = new Set([currentMonth]);
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith('transactions_')) localMonths.add(key.replace('transactions_', ''));
+                if (key.startsWith('baseBudget_')) localMonths.add(key.replace('baseBudget_', ''));
+            }
+            availableMonthsList = Array.from(localMonths).sort().reverse();
+
             updateMonthDropdown();
             updateCategories();
             updateUI();
         }
 
-        // Fast Asynchronous Save
         function saveData() {
             localStorage.setItem('activeMonth', currentMonth);
             localStorage.setItem('transactions_' + currentMonth, JSON.stringify(transactions));
@@ -978,19 +1029,20 @@
                     transactions: transactions,
                     baseBudget: baseBudget
                 };
-                database.ref('months/' + currentMonth).set(monthPayload);
-                database.ref('udhaarList').set(udhaarList);
-                
-                database.ref('metadata/months').once('value').then(snap => {
-                    let list = snap.val() || [];
-                    if (!list.includes(currentMonth)) {
-                        list.push(currentMonth);
-                        database.ref('metadata/months').set(list);
-                    }
-                }).catch(() => {});
+                database.ref('months/' + currentMonth).set(monthPayload).catch(() => {});
+                database.ref('udhaarList').set(udhaarList).catch(() => {});
             }
 
             document.getElementById('syncStatus').innerText = "🟢 Saved & Synced";
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.querySelector('.theme-toggle-btn').innerText = newTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
         }
 
         function checkEveningReminder() {
@@ -1171,9 +1223,9 @@
                 alert('No data recorded for this month.');
                 return;
             }
-            if (confirm(`Are you sure you want to permanently delete all data for month ${currentMonth}?`)) {
+            if (confirm(`Are you sure you want to delete all data for month ${currentMonth}?`)) {
                 if (database) {
-                    database.ref('months/' + currentMonth).remove();
+                    database.ref('months/' + currentMonth).remove().catch(() => {});
                 }
                 localStorage.removeItem('baseBudget_' + currentMonth);
                 localStorage.removeItem('transactions_' + currentMonth);
@@ -1220,39 +1272,50 @@
             loadMonthData(currentMonth);
         }
 
-        // Auto-detect month from filename (e.g. 2026-06.json) and import
+        // Smart Import JSON with automatic month separation & auto-detect
         function importMonthlyJSON(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            let fileName = file.name.replace('.json', '').trim();
-            if (/^\d{4}-\d{2}$/.test(fileName)) {
-                currentMonth = fileName;
-            }
+            let fileNameMonth = file.name.replace('.json', '').trim();
 
             const reader = new FileReader();
             reader.onload = function(event) {
                 try {
                     const data = JSON.parse(event.target.result);
-                    if (data.transactions) {
-                        transactions = data.transactions;
-                        if (data.udhaarList) udhaarList = data.udhaarList;
-                        
-                        transactions.forEach(t => {
-                            if (!t.month) t.month = currentMonth;
-                        });
+                    let rawList = data.transactions || (Array.isArray(data) ? data : null);
 
-                        saveData();
+                    if (rawList) {
+                        cleanAndUnclusterData(rawList);
+                        if (/^\d{4}-\d{2}$/.test(fileNameMonth)) {
+                            currentMonth = fileNameMonth;
+                        }
                         loadMonthData(currentMonth);
-                        alert(`Successfully imported & synced for month: ${currentMonth}`);
+                        alert(`Successfully imported & un-clustered data! Selected Month: ${currentMonth}`);
                     } else {
-                        alert('Invalid JSON format: "transactions" missing.');
+                        alert('Invalid JSON structure: Could not find transactions.');
                     }
                 } catch (err) {
                     alert('Error parsing JSON file.');
                 }
             };
             reader.readAsText(file);
+        }
+
+        // Exports ONLY active month clean JSON file
+        function exportBackupJSON() {
+            const baseBudget = getBaseBudget();
+            const monthData = {
+                month: currentMonth,
+                baseBudget: baseBudget,
+                transactions: transactions,
+                udhaarList: udhaarList
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monthData, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `${currentMonth}.json`;
+            a.click();
         }
 
         function getTotals() {
@@ -1262,13 +1325,20 @@
             let upiTotal = transactions.filter(t => t.paymentMode === 'UPI').reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
             let base = getBaseBudget();
             let net = (base + totalIncome) - totalExpense;
-            return { totalIncome, totalExpense, cashTotal, upiTotal, net, monthTransactions: transactions };
+            return { 
+                totalIncome: Math.round(totalIncome * 100) / 100, 
+                totalExpense: Math.round(totalExpense * 100) / 100, 
+                cashTotal: Math.round(cashTotal * 100) / 100, 
+                upiTotal: Math.round(upiTotal * 100) / 100, 
+                net: Math.round(net * 100) / 100, 
+                monthTransactions: transactions 
+            };
         }
 
         function openExpenseDetails() {
             const totals = getTotals();
             const expenseTrans = totals.monthTransactions.filter(t => t.type === 'expense');
-            document.getElementById('categoryModalTitle').innerText = `Total Expenses Breakdown (Total: ₹${totals.totalExpense})`;
+            document.getElementById('categoryModalTitle').innerText = `Total Expenses Breakdown (Total: ₹${totals.totalExpense.toFixed(2)})`;
             const listContainer = document.getElementById('categoryDetailsList');
             listContainer.innerHTML = '';
             
@@ -1283,7 +1353,7 @@
                             <strong>${t.title}</strong><br>
                             <span style="font-size:0.75rem; color:#9ca3af;">Category: ${t.category} • Mode: ${t.paymentMode || 'Cash'} • ${t.date}</span>
                         </div>
-                        <strong style="color:var(--danger-color);">-₹${t.amount}</strong>
+                        <strong style="color:var(--danger-color);">-₹${t.amount.toFixed(2)}</strong>
                     `;
                     listContainer.appendChild(itemDiv);
                 });
@@ -1296,7 +1366,7 @@
             const catTransactions = totals.monthTransactions.filter(t => t.type === 'expense' && t.category === categoryName);
             const totalAmt = catTransactions.reduce((sum, t) => sum + t.amount, 0);
             
-            document.getElementById('categoryModalTitle').innerText = `${categoryName} (Total: ₹${totalAmt})`;
+            document.getElementById('categoryModalTitle').innerText = `${categoryName} (Total: ₹${totalAmt.toFixed(2)})`;
             const listContainer = document.getElementById('categoryDetailsList');
             listContainer.innerHTML = '';
             
@@ -1311,7 +1381,7 @@
                             <strong>${t.title}</strong><br>
                             <span style="font-size:0.75rem; color:#9ca3af;">${t.date} • Mode: ${t.paymentMode || 'Cash'}</span>
                         </div>
-                        <strong style="color:var(--danger-color);">-₹${t.amount}</strong>
+                        <strong style="color:var(--danger-color);">-₹${t.amount.toFixed(2)}</strong>
                     `;
                     listContainer.appendChild(itemDiv);
                 });
@@ -1324,7 +1394,7 @@
             const modeTransactions = totals.monthTransactions.filter(t => (t.paymentMode || 'Cash') === mode);
             const netAmt = modeTransactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
             
-            document.getElementById('categoryModalTitle').innerText = `${mode} Transactions Breakdown (Net: ₹${netAmt})`;
+            document.getElementById('categoryModalTitle').innerText = `${mode} Transactions Breakdown (Net: ₹${netAmt.toFixed(2)})`;
             const listContainer = document.getElementById('categoryDetailsList');
             listContainer.innerHTML = '';
             
@@ -1339,7 +1409,7 @@
                             <strong>${t.title}</strong><br>
                             <span style="font-size:0.75rem; color:#9ca3af;">Category: ${t.category} • ${t.date}</span>
                         </div>
-                        <strong style="color:${t.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)'};">${t.type === 'income' ? '+' : '-'}₹${t.amount}</strong>
+                        <strong style="color:${t.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)'};">${t.type === 'income' ? '+' : '-'}₹${t.amount.toFixed(2)}</strong>
                     `;
                     listContainer.appendChild(itemDiv);
                 });
@@ -1378,7 +1448,7 @@
                 let totalPersonAmt = personEntries.reduce((sum, item) => sum + (item.type === 'given' ? item.amount : -item.amount), 0);
                 let div = document.createElement('div');
                 div.className = 'analytics-item-row';
-                div.innerHTML = `<strong>👤 ${person} (Net: ₹${Math.abs(totalPersonAmt)})</strong>`;
+                div.innerHTML = `<strong>👤 ${person} (Net: ₹${Math.abs(totalPersonAmt).toFixed(2)})</strong>`;
                 container.appendChild(div);
             });
         }
@@ -1414,7 +1484,7 @@
                 let net = dayData ? dayData.income - dayData.expense : 0;
                 cell.className = 'cal-day-cell';
                 if (dayData) cell.classList.add(net >= 0 ? 'has-trans' : 'has-loss');
-                cell.innerHTML = `<div style="font-weight:bold;">${d}</div><div style="font-size:0.65rem; color:${net >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">${dayData ? (net >= 0 ? '+' : '') + '₹' + net : ''}</div>`;
+                cell.innerHTML = `<div style="font-weight:bold;">${d}</div><div style="font-size:0.65rem; color:${net >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">${dayData ? (net >= 0 ? '+' : '') + '₹' + net.toFixed(2) : ''}</div>`;
                 cell.onclick = () => showCalendarDayDetails(d, dayData);
                 grid.appendChild(cell);
             }
@@ -1424,9 +1494,9 @@
             const detailsEl = document.getElementById('calendarDayDetails');
             if (!dayData || dayData.items.length === 0) { detailsEl.innerHTML = `<strong>Day ${day}:</strong> No transactions.`; return; }
             let net = dayData.income - dayData.expense;
-            let html = `<strong>Day ${day} Summary:</strong> Net <span style="color:${net >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">₹${net}</span><ul style="margin-top:6px; list-style:none; max-height:120px; overflow-y:auto;">`;
+            let html = `<strong>Day ${day} Summary:</strong> Net <span style="color:${net >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight:bold;">₹${net.toFixed(2)}</span><ul style="margin-top:6px; list-style:none; max-height:120px; overflow-y:auto;">`;
             dayData.items.forEach(t => {
-                html += `<li style="font-size:0.8rem; border-bottom:1px solid var(--border-color); padding:4px 0;">${t.category} (${t.title}): <strong>${t.type === 'income' ? '+' : '-'}₹${t.amount}</strong></li>`;
+                html += `<li style="font-size:0.8rem; border-bottom:1px solid var(--border-color); padding:4px 0;">${t.category} (${t.title}): <strong>${t.type === 'income' ? '+' : '-'}₹${t.amount.toFixed(2)}</strong></li>`;
             });
             html += `</ul>`;
             detailsEl.innerHTML = html;
@@ -1459,7 +1529,7 @@
             let days = Object.keys(dailyMap), incomes = days.map(d => dailyMap[d].income), expenses = days.map(d => dailyMap[d].expense);
             document.getElementById('analyticsInsight').innerHTML = `💡 <strong>Daily Trend:</strong> Active days analyzed.`;
             renderLineChart(days, incomes, expenses);
-            document.getElementById('analyticsContentList').innerHTML = days.map(d => `<div class="analytics-item-row"><span>${d}</span><span style="color:var(--success-color);">+₹${dailyMap[d].income}</span><span style="color:var(--danger-color);">-₹${dailyMap[d].expense}</span></div>`).join('') || '<div style="text-align:center; color:#9ca3af;">No data</div>';
+            document.getElementById('analyticsContentList').innerHTML = days.map(d => `<div class="analytics-item-row"><span>${d}</span><span style="color:var(--success-color);">+₹${dailyMap[d].income.toFixed(2)}</span><span style="color:var(--danger-color);">-₹${dailyMap[d].expense.toFixed(2)}</span></div>`).join('') || '<div style="text-align:center; color:#9ca3af;">No data</div>';
         }
 
         function renderWeeklyAnalytics(monthTrans) {
@@ -1471,7 +1541,7 @@
             });
             let weeks = Object.keys(weekMap);
             renderBarChart(weeks, weeks.map(w => weekMap[w].income), weeks.map(w => weekMap[w].expense));
-            document.getElementById('analyticsContentList').innerHTML = weeks.map(w => `<div class="analytics-item-row"><span>${w}</span><span style="color:var(--success-color);">+₹${weekMap[w].income}</span><span style="color:var(--danger-color);">-₹${weekMap[w].expense}</span></div>`).join('');
+            document.getElementById('analyticsContentList').innerHTML = weeks.map(w => `<div class="analytics-item-row"><span>${w}</span><span style="color:var(--success-color);">+₹${weekMap[w].income.toFixed(2)}</span><span style="color:var(--danger-color);">-₹${weekMap[w].expense.toFixed(2)}</span></div>`).join('');
         }
 
         function renderCategoryAnalytics(monthTrans) {
@@ -1484,7 +1554,7 @@
                 data: { labels: cats.length ? cats : ['None'], datasets: [{ data: amounts.length ? amounts : [1], backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#4f46e5', '#8b5cf6'] }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
-            document.getElementById('analyticsContentList').innerHTML = cats.map(c => `<div class="analytics-item-row"><span>${c}</span><strong style="color:var(--danger-color);">₹${catMap[c]}</strong></div>`).join('') || '<div style="text-align:center; color:#9ca3af;">No expenses</div>';
+            document.getElementById('analyticsContentList').innerHTML = cats.map(c => `<div class="analytics-item-row"><span>${c}</span><strong style="color:var(--danger-color);">₹${catMap[c].toFixed(2)}</strong></div>`).join('') || '<div style="text-align:center; color:#9ca3af;">No expenses</div>';
         }
 
         function renderIncomeCategoryAnalytics(monthTrans) {
@@ -1497,36 +1567,11 @@
                 data: { labels: cats.length ? cats : ['None'], datasets: [{ data: amounts.length ? amounts : [1], backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'] }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
-            document.getElementById('analyticsContentList').innerHTML = cats.map(c => `<div class="analytics-item-row"><span>${c}</span><strong style="color:var(--success-color);">+₹${catMap[c]}</strong></div>`).join('') || '<div style="text-align:center; color:#9ca3af;">No income</div>';
+            document.getElementById('analyticsContentList').innerHTML = cats.map(c => `<div class="analytics-item-row"><span>${c}</span><strong style="color:var(--success-color);">+₹${catMap[c].toFixed(2)}</strong></div>`).join('') || '<div style="text-align:center; color:#9ca3af;">No income</div>';
         }
 
         function renderMonthlyAnalytics() {
-            if (!database) {
-                renderMonthlyAnalyticsLocal();
-                return;
-            }
-            database.ref('months').once('value').then(snap => {
-                let allM = snap.val() || {};
-                let sortedMonths = Object.keys(allM).sort();
-                let netBalances = sortedMonths.map(m => {
-                    let mData = allM[m];
-                    let mTrans = mData.transactions || [];
-                    let inc = mTrans.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-                    let exp = mTrans.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-                    return (mData.baseBudget || 0) + inc - exp;
-                });
-                if (analyticsChartInstance) analyticsChartInstance.destroy();
-                analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
-                    type: 'bar',
-                    data: { labels: sortedMonths.length ? sortedMonths : [currentMonth], datasets: [{ data: netBalances.length ? netBalances : [getTotals().net], backgroundColor: '#4f46e5' }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-                document.getElementById('analyticsContentList').innerHTML = sortedMonths.map((m, i) => `<div class="analytics-item-row"><span>${m}</span><strong style="color:${netBalances[i] >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">₹${netBalances[i]}</strong></div>`).join('');
-            }).catch(() => renderMonthlyAnalyticsLocal());
-        }
-
-        function renderMonthlyAnalyticsLocal() {
-            let sortedMonths = [currentMonth];
+            let sortedMonths = availableMonthsList.length ? availableMonthsList : [currentMonth];
             let netBalances = [getTotals().net];
             if (analyticsChartInstance) analyticsChartInstance.destroy();
             analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
@@ -1534,7 +1579,7 @@
                 data: { labels: sortedMonths, datasets: [{ data: netBalances, backgroundColor: '#4f46e5' }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
-            document.getElementById('analyticsContentList').innerHTML = `<div class="analytics-item-row"><span>${currentMonth}</span><strong style="color:var(--success-color);">₹${netBalances[0]}</strong></div>`;
+            document.getElementById('analyticsContentList').innerHTML = `<div class="analytics-item-row"><span>${currentMonth}</span><strong style="color:var(--success-color);">₹${netBalances[0].toFixed(2)}</strong></div>`;
         }
 
         function renderLineChart(labels, incomeData, expenseData) {
@@ -1562,14 +1607,6 @@
             a.click();
         }
 
-        function exportBackupJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ transactions, udhaarList }, null, 2));
-            const a = document.createElement('a');
-            a.href = dataStr;
-            a.download = `backup_${currentMonth}.json`;
-            a.click();
-        }
-
         function triggerRestore() { document.getElementById('restoreFile').click(); }
 
         async function exportToPDF() {
@@ -1584,12 +1621,12 @@
 
             doc.setFontSize(10);
             doc.setTextColor(55, 65, 81);
-            doc.text(`Base Budget: Rs. ${baseBudget}`, 14, 28);
-            doc.text(`Extra Income: Rs. ${totals.totalIncome}`, 14, 34);
-            doc.text(`Total Expenses: Rs. ${totals.totalExpense}`, 14, 40);
-            doc.text(`Cash Balance (Net): Rs. ${totals.cashTotal}`, 110, 28);
-            doc.text(`UPI/Digital Balance (Net): Rs. ${totals.upiTotal}`, 110, 34);
-            doc.text(`Net Balance: Rs. ${totals.net}`, 110, 40);
+            doc.text(`Base Budget: Rs. ${baseBudget.toFixed(2)}`, 14, 28);
+            doc.text(`Extra Income: Rs. ${totals.totalIncome.toFixed(2)}`, 14, 34);
+            doc.text(`Total Expenses: Rs. ${totals.totalExpense.toFixed(2)}`, 14, 40);
+            doc.text(`Cash Balance (Net): Rs. ${totals.cashTotal.toFixed(2)}`, 110, 28);
+            doc.text(`UPI/Digital Balance (Net): Rs. ${totals.upiTotal.toFixed(2)}`, 110, 34);
+            doc.text(`Net Balance: Rs. ${totals.net.toFixed(2)}`, 110, 40);
 
             const tableData = totals.monthTransactions.map(t => [
                 t.date,
@@ -1597,7 +1634,7 @@
                 t.category,
                 t.paymentMode || 'Cash',
                 t.title,
-                `${t.type === 'income' ? '+' : '-'}Rs. ${t.amount}`
+                `${t.type === 'income' ? '+' : '-'}Rs. ${t.amount.toFixed(2)}`
             ]);
 
             doc.autoTable({
@@ -1647,10 +1684,10 @@
             const baseBudget = getBaseBudget();
             let text = `📊 *Monthly Budget Report (${currentMonth})*\n\n`;
             text += `💰 *Summary:*\n`;
-            text += `• Base Budget: ₹${baseBudget.toLocaleString('en-IN')}\n`;
-            text += `• Extra Income: ₹${totals.totalIncome.toLocaleString('en-IN')}\n`;
-            text += `• Total Expenses: ₹${totals.totalExpense.toLocaleString('en-IN')}\n`;
-            text += `• Net Balance: ₹${totals.net.toLocaleString('en-IN')}\n\n`;
+            text += `• Base Budget: ₹${baseBudget.toFixed(2)}\n`;
+            text += `• Extra Income: ₹${totals.totalIncome.toFixed(2)}\n`;
+            text += `• Total Expenses: ₹${totals.totalExpense.toFixed(2)}\n`;
+            text += `• Net Balance: ₹${totals.net.toFixed(2)}\n\n`;
             text += `📝 *Transactions List (${totals.monthTransactions.length}):*\n`;
             
             if (totals.monthTransactions.length === 0) {
@@ -1659,7 +1696,7 @@
                 totals.monthTransactions.forEach((t, i) => {
                     let sign = t.type === 'income' ? '+' : '-';
                     text += `${i + 1}. ${t.date} | *${t.category}* (${t.paymentMode || 'Cash'})\n`;
-                    text += `   ${t.title}: ${sign}₹${t.amount.toLocaleString('en-IN')}\n`;
+                    text += `   ${t.title}: ${sign}₹${t.amount.toFixed(2)}\n`;
                 });
             }
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
@@ -1717,7 +1754,7 @@
                         <div>${t.date}</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span class="t-amount ${t.type}">${t.type === 'income' ? '+' : '-'}₹${t.amount}</span>
+                        <span class="t-amount ${t.type}">${t.type === 'income' ? '+' : '-'}₹${t.amount.toFixed(2)}</span>
                         <button class="action-icon-btn btn-edit" onclick="editTransaction(${t.id})" aria-label="Edit">✎</button>
                         <button class="action-icon-btn btn-del" onclick="deleteTransaction(${t.id})" aria-label="Delete">✕</button>
                     </div>`;
@@ -1733,7 +1770,7 @@
                 catKeys.forEach(c => {
                     const badge = document.createElement('div');
                     badge.className = 'tag-badge';
-                    badge.innerText = `${c}: ₹${categoryTotals[c]} 🔍`;
+                    badge.innerText = `${c}: ₹${categoryTotals[c].toFixed(2)} 🔍`;
                     badge.onclick = () => openCategoryDetails(c);
                     categoryTagsEl.appendChild(badge);
                 });
@@ -1741,18 +1778,23 @@
                 breakdownContainer.style.display = 'none';
             }
 
-            document.getElementById('displayBaseBudget').innerText = `₹${getBaseBudget()}`;
-            document.getElementById('totalIncome').innerText = `₹${totals.totalIncome}`;
-            document.getElementById('totalExpense').innerText = `₹${totals.totalExpense}`;
-            document.getElementById('cashTotalDisplay').innerText = `₹${totals.cashTotal}`;
-            document.getElementById('upiTotalDisplay').innerText = `₹${totals.upiTotal}`;
+            document.getElementById('displayBaseBudget').innerText = `₹${getBaseBudget().toFixed(2)}`;
+            document.getElementById('totalIncome').innerText = `₹${totals.totalIncome.toFixed(2)}`;
+            document.getElementById('totalExpense').innerText = `₹${totals.totalExpense.toFixed(2)}`;
+            document.getElementById('cashTotalDisplay').innerText = `₹${totals.cashTotal.toFixed(2)}`;
+            document.getElementById('upiTotalDisplay').innerText = `₹${totals.upiTotal.toFixed(2)}`;
             const netEl = document.getElementById('netBalance');
-            netEl.innerText = `₹${totals.net}`;
+            netEl.innerText = `₹${totals.net.toFixed(2)}`;
             netEl.style.color = totals.net >= 0 ? '#f8fafc' : '#f87171';
         }
 
-        // Initialize App on Load Safely
+        // Initialize App
         window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            const btn = document.querySelector('.theme-toggle-btn');
+            if(btn) btn.innerText = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+
             loadMonthData(currentMonth);
             checkEveningReminder();
         });
