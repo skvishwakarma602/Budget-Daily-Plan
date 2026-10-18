@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Budget Planner Pro - Clean Month-wise Edition</title>
+    <title>Monthly Budget Planner Pro - Current Month First Edition</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
@@ -906,11 +906,12 @@
             return `${year}-${month}`;
         }
 
-        let currentMonth = localStorage.getItem('activeMonth') || getFormattedMonthKey();
+        // Real-time Current Month Always First Priority on Refresh
+        const REAL_CURRENT_MONTH = getFormattedMonthKey();
+        let currentMonth = REAL_CURRENT_MONTH;
 
-        // Helper: Extract month key 'YYYY-MM' from transaction date string if missing
         function extractMonthFromDate(dateStr) {
-            if (!dateStr) return currentMonth;
+            if (!dateStr) return REAL_CURRENT_MONTH;
             const monthMap = { 'Jan':'01', 'Feb':'02', 'Mar':'03', 'Apr':'04', 'May':'05', 'Jun':'06', 'Jul':'07', 'Aug':'08', 'Sep':'09', 'Oct':'10', 'Nov':'11', 'Dec':'12' };
             for (let mName in monthMap) {
                 if (dateStr.includes(mName)) {
@@ -919,10 +920,9 @@
                     return `${year}-${monthMap[mName]}`;
                 }
             }
-            return currentMonth;
+            return REAL_CURRENT_MONTH;
         }
 
-        // Automatic Month Un-clustering Engine
         function cleanAndUnclusterData(rawTransList) {
             if (!Array.isArray(rawTransList)) return;
             
@@ -941,7 +941,6 @@
                 }
             }
 
-            // Cleanup old general unseparated storage
             localStorage.removeItem('transactions');
         }
 
@@ -949,7 +948,6 @@
             const statusEl = document.getElementById('syncStatus');
             statusEl.innerText = `⚡ Loading ${monthKey}...`;
 
-            // Auto Un-cluster old legacy merged data from local storage if present
             let oldLegacyTrans = JSON.parse(localStorage.getItem('transactions'));
             if (oldLegacyTrans) cleanAndUnclusterData(oldLegacyTrans);
 
@@ -971,13 +969,12 @@
                 let allMonthsData = monthsSnap ? monthsSnap.val() || {} : {};
                 let metaMonths = metaSnap ? metaSnap.val() || [] : [];
                 
-                availableMonthsList = Array.from(new Set([...Object.keys(allMonthsData), ...metaMonths, currentMonth])).sort().reverse();
+                availableMonthsList = Array.from(new Set([...Object.keys(allMonthsData), ...metaMonths, REAL_CURRENT_MONTH, currentMonth])).sort().reverse();
                 udhaarList = udhaarSnap ? udhaarSnap.val() || [] : [];
                 
                 let monthNode = allMonthsData[monthKey] || {};
                 transactions = monthNode.transactions || [];
                 
-                // Ensure active month data is filtered correctly
                 transactions = transactions.filter(t => !t.month || t.month === monthKey);
 
                 if (monthNode.baseBudget !== undefined) {
@@ -990,7 +987,7 @@
                 updateMonthDropdown();
                 updateCategories();
                 updateUI();
-                statusEl.innerText = "🟢 Connected & Month Synced";
+                statusEl.innerText = "🟢 Connected & Synced";
             }).catch(err => {
                 fallbackLocalLoad(monthKey);
             });
@@ -1004,7 +1001,7 @@
             transactions = JSON.parse(localStorage.getItem('transactions_' + monthKey)) || [];
             udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
             
-            let localMonths = new Set([currentMonth]);
+            let localMonths = new Set([REAL_CURRENT_MONTH, currentMonth]);
             for (let i = 0; i < localStorage.length; i++) {
                 let key = localStorage.key(i);
                 if (key.startsWith('transactions_')) localMonths.add(key.replace('transactions_', ''));
@@ -1250,6 +1247,8 @@
             monthSelect.innerHTML = '';
             
             if (!availableMonthsList.includes(currentMonth)) availableMonthsList.push(currentMonth);
+            if (!availableMonthsList.includes(REAL_CURRENT_MONTH)) availableMonthsList.push(REAL_CURRENT_MONTH);
+            
             availableMonthsList.sort().reverse();
 
             availableMonthsList.forEach(m => {
@@ -1258,7 +1257,7 @@
                 let parts = m.split('-');
                 if(parts.length === 2) {
                     let monthName = new Date(parts[0], parts[1] - 1, 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-                    el.textContent = monthName;
+                    el.textContent = m === REAL_CURRENT_MONTH ? `${monthName} (Current)` : monthName;
                 } else {
                     el.textContent = m;
                 }
@@ -1272,7 +1271,6 @@
             loadMonthData(currentMonth);
         }
 
-        // Smart Import JSON with automatic month separation & auto-detect
         function importMonthlyJSON(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -1302,7 +1300,6 @@
             reader.readAsText(file);
         }
 
-        // Exports ONLY active month clean JSON file
         function exportBackupJSON() {
             const baseBudget = getBaseBudget();
             const monthData = {
