@@ -624,7 +624,7 @@
             <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark/Light Mode">🌙 Dark</button>
             <h1><span>💸</span> Monthly Budget Planner</h1>
             <p style="font-size: 0.85rem; color: #9ca3af;">High-Speed Monthly Firebase Edition</p>
-            <div id="syncStatus" class="sync-status">⚡ Connecting to Firebase...</div>
+            <div id="syncStatus" class="sync-status">⚡ Initializing...</div>
         </header>
 
         <div id="eveningReminderBanner" class="reminder-banner" style="display: none;">
@@ -874,18 +874,25 @@
     <script>
         // ================= FIREBASE CONFIGURATION =================
         const firebaseConfig = {
-            apiKey: "AIzaSyDdruN31NeSxw16zKVBQN15LJfL_wYhPe8",
+            apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL:
-"https://monthly-budget-planner-new-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "monthly-budget-planner-new",
-            storageBucket: "monthly-budget-planner-new.firebasestorage.app",
-            messagingSenderId: "870398619862",
-            appId: "1:870398619862:web:38dc963ec8c968bfc45977"
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        // Initialize Firebase safely with fallback
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+        } catch (e) {
+            console.error("Firebase init error:", e);
+        }
+        
+        const database = firebase.database ? firebase.database() : null;
 
         let transactions = [];
         let udhaarList = [];
@@ -902,68 +909,88 @@
 
         let currentMonth = localStorage.getItem('activeMonth') || getFormattedMonthKey();
 
-        // High-Speed Data Loader: Fetches ONLY Active Month data & Udhaar List from Firebase
+        // High-Speed Data Loader with Fallback
         function loadMonthData(monthKey) {
             const statusEl = document.getElementById('syncStatus');
             statusEl.innerText = `⚡ Loading ${monthKey}...`;
 
-            // Fetch available months list and active month data in parallel for speed
+            if (!database) {
+                fallbackLocalLoad(monthKey);
+                return;
+            }
+
             Promise.all([
-                database.ref('months').once('value'),
-                database.ref('udhaarList').once('value'),
-                database.ref('metadata/months').once('value')
+                database.ref('months').once('value').catch(() => null),
+                database.ref('udhaarList').once('value').catch(() => null),
+                database.ref('metadata/months').once('value').catch(() => null)
             ]).then(([monthsSnap, udhaarSnap, metaSnap]) => {
-                let allMonthsData = monthsSnap.val() || {};
-                let metaMonths = metaSnap.val() || [];
+                let allMonthsData = monthsSnap ? monthsSnap.val() || {} : {};
+                let metaMonths = metaSnap ? metaSnap.val() || [] : [];
                 
                 availableMonthsList = Array.from(new Set([...Object.keys(allMonthsData), ...metaMonths, currentMonth])).sort().reverse();
                 
-                udhaarList = udhaarSnap.val() || [];
+                udhaarList = udhaarSnap ? udhaarSnap.val() || [] : [];
                 
                 let monthNode = allMonthsData[monthKey] || {};
                 transactions = monthNode.transactions || [];
                 
                 if (monthNode.baseBudget !== undefined) {
                     localStorage.setItem('baseBudget_' + monthKey, monthNode.baseBudget);
+                } else if (transactions.length === 0) {
+                    // Fallback to local storage if empty in cloud
+                    let localTrans = JSON.parse(localStorage.getItem('transactions_' + monthKey));
+                    if (localTrans) transactions = localTrans;
                 }
 
                 updateMonthDropdown();
                 updateCategories();
                 updateUI();
-                statusEl.innerText = "⚡ Connected & Fast Synced";
+                statusEl.innerText = "🟢 Connected & Fast Synced";
             }).catch(err => {
-                statusEl.innerText = "🔴 Cloud Error. Offline mode.";
-                statusEl.style.color = "var(--danger-color)";
-                transactions = JSON.parse(localStorage.getItem('transactions_' + monthKey)) || [];
-                updateCategories();
-                updateUI();
+                fallbackLocalLoad(monthKey);
             });
         }
 
-        // Fast Asynchronous Save for Current Month
+        function fallbackLocalLoad(monthKey) {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.innerText = "🟡 Offline Mode (Local Storage)";
+            statusEl.style.color = "var(--warning-color)";
+            
+            transactions = JSON.parse(localStorage.getItem('transactions_' + monthKey)) || JSON.parse(localStorage.getItem('transactions')) || [];
+            udhaarList = JSON.parse(localStorage.getItem('udhaarList')) || [];
+            availableMonthsList = [currentMonth];
+            
+            updateMonthDropdown();
+            updateCategories();
+            updateUI();
+        }
+
+        // Fast Asynchronous Save
         function saveData() {
             localStorage.setItem('activeMonth', currentMonth);
+            localStorage.setItem('transactions_' + currentMonth, JSON.stringify(transactions));
+            localStorage.setItem('udhaarList', JSON.stringify(udhaarList));
+            
             let baseBudget = parseFloat(localStorage.getItem('baseBudget_' + currentMonth)) || 0;
 
-            let monthPayload = {
-                transactions: transactions,
-                baseBudget: baseBudget
-            };
+            if (database) {
+                let monthPayload = {
+                    transactions: transactions,
+                    baseBudget: baseBudget
+                };
+                database.ref('months/' + currentMonth).set(monthPayload);
+                database.ref('udhaarList').set(udhaarList);
+                
+                database.ref('metadata/months').once('value').then(snap => {
+                    let list = snap.val() || [];
+                    if (!list.includes(currentMonth)) {
+                        list.push(currentMonth);
+                        database.ref('metadata/months').set(list);
+                    }
+                }).catch(() => {});
+            }
 
-            // Non-blocking background save to Firebase
-            database.ref('months/' + currentMonth).set(monthPayload);
-            database.ref('udhaarList').set(udhaarList);
-            
-            // Update months index metadata
-            database.ref('metadata/months').once('value').then(snap => {
-                let list = snap.val() || [];
-                if (!list.includes(currentMonth)) {
-                    list.push(currentMonth);
-                    database.ref('metadata/months').set(list);
-                }
-            });
-
-            document.getElementById('syncStatus').innerText = "⚡ Saved & Synced";
+            document.getElementById('syncStatus').innerText = "🟢 Saved & Synced";
         }
 
         function checkEveningReminder() {
@@ -1138,21 +1165,21 @@
             }
         }
 
-        // Monthly Delete Function (Deletes active month from Firebase and local cache)
         function deleteCurrentMonthData() {
             const totals = getTotals();
             if (totals.monthTransactions.length === 0 && getBaseBudget() === 0) {
                 alert('No data recorded for this month.');
                 return;
             }
-            if (confirm(`Are you sure you want to permanently delete all data for month ${currentMonth} from cloud database?`)) {
-                database.ref('months/' + currentMonth).remove().then(() => {
-                    localStorage.removeItem('baseBudget_' + currentMonth);
-                    transactions = [];
-                    updateUI();
-                    loadMonthData(currentMonth);
-                    alert(`Data for ${currentMonth} deleted successfully.`);
-                });
+            if (confirm(`Are you sure you want to permanently delete all data for month ${currentMonth}?`)) {
+                if (database) {
+                    database.ref('months/' + currentMonth).remove();
+                }
+                localStorage.removeItem('baseBudget_' + currentMonth);
+                localStorage.removeItem('transactions_' + currentMonth);
+                transactions = [];
+                updateUI();
+                alert(`Data for ${currentMonth} deleted successfully.`);
             }
         }
 
@@ -1193,28 +1220,33 @@
             loadMonthData(currentMonth);
         }
 
-        // Feature to upload monthly JSON files and inject directly into Firebase
+        // Auto-detect month from filename (e.g. 2026-06.json) and import
         function importMonthlyJSON(e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            let fileName = file.name.replace('.json', '').trim();
+            if (/^\d{4}-\d{2}$/.test(fileName)) {
+                currentMonth = fileName;
+            }
+
             const reader = new FileReader();
             reader.onload = function(event) {
                 try {
                     const data = JSON.parse(event.target.result);
-                    // Supports both full backup JSON or single month JSON files
                     if (data.transactions) {
-                        let detectedMonth = currentMonth;
-                        if (data.transactions.length > 0 && data.transactions[0].month) {
-                            detectedMonth = data.transactions[0].month;
-                        }
-                        currentMonth = detectedMonth;
                         transactions = data.transactions;
                         if (data.udhaarList) udhaarList = data.udhaarList;
+                        
+                        transactions.forEach(t => {
+                            if (!t.month) t.month = currentMonth;
+                        });
+
                         saveData();
                         loadMonthData(currentMonth);
-                        alert(`Successfully imported and synced to Firebase for month: ${currentMonth}`);
+                        alert(`Successfully imported & synced for month: ${currentMonth}`);
                     } else {
-                        alert('Invalid JSON format.');
+                        alert('Invalid JSON format: "transactions" missing.');
                     }
                 } catch (err) {
                     alert('Error parsing JSON file.');
@@ -1469,6 +1501,10 @@
         }
 
         function renderMonthlyAnalytics() {
+            if (!database) {
+                renderMonthlyAnalyticsLocal();
+                return;
+            }
             database.ref('months').once('value').then(snap => {
                 let allM = snap.val() || {};
                 let sortedMonths = Object.keys(allM).sort();
@@ -1486,7 +1522,19 @@
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
                 });
                 document.getElementById('analyticsContentList').innerHTML = sortedMonths.map((m, i) => `<div class="analytics-item-row"><span>${m}</span><strong style="color:${netBalances[i] >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">₹${netBalances[i]}</strong></div>`).join('');
+            }).catch(() => renderMonthlyAnalyticsLocal());
+        }
+
+        function renderMonthlyAnalyticsLocal() {
+            let sortedMonths = [currentMonth];
+            let netBalances = [getTotals().net];
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+            analyticsChartInstance = new Chart(document.getElementById('analyticsChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: sortedMonths, datasets: [{ data: netBalances, backgroundColor: '#4f46e5' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
+            document.getElementById('analyticsContentList').innerHTML = `<div class="analytics-item-row"><span>${currentMonth}</span><strong style="color:var(--success-color);">₹${netBalances[0]}</strong></div>`;
         }
 
         function renderLineChart(labels, incomeData, expenseData) {
@@ -1697,14 +1745,13 @@
             document.getElementById('totalIncome').innerText = `₹${totals.totalIncome}`;
             document.getElementById('totalExpense').innerText = `₹${totals.totalExpense}`;
             document.getElementById('cashTotalDisplay').innerText = `₹${totals.cashTotal}`;
-            document.getElementById('upiTotalDialog'] ? '' : '';
             document.getElementById('upiTotalDisplay').innerText = `₹${totals.upiTotal}`;
             const netEl = document.getElementById('netBalance');
             netEl.innerText = `₹${totals.net}`;
             netEl.style.color = totals.net >= 0 ? '#f8fafc' : '#f87171';
         }
 
-        // Initialize High-Speed App on Load
+        // Initialize App on Load Safely
         window.addEventListener('DOMContentLoaded', () => {
             loadMonthData(currentMonth);
             checkEveningReminder();
