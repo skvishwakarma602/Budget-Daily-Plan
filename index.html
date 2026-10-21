@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Budget Planner Pro - Current Month First Edition</title>
+    <title>Monthly Budget Planner Pro - Income Breakdown Edition</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
@@ -226,6 +226,7 @@
         .card.clickable:hover {
             opacity: 0.95;
             transform: translateY(-2px);
+            border-color: var(--primary-color);
         }
 
         .card h3 {
@@ -615,6 +616,23 @@
             background: rgba(239, 68, 68, 0.08);
             border-color: rgba(239, 68, 68, 0.3);
         }
+
+        .income-breakdown-section {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .income-breakdown-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--success-color);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -623,7 +641,7 @@
         <header>
             <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark/Light Mode">🌙 Dark</button>
             <h1><span>💸</span> Monthly Budget Planner</h1>
-            <p style="font-size: 0.85rem; color: #9ca3af;">High-Speed Monthly Pro Edition</p>
+            <p style="font-size: 0.85rem; color: #9ca3af;">High-Speed Income Breakdown Pro Edition</p>
             <div id="syncStatus" class="sync-status">⚡ App Ready</div>
         </header>
 
@@ -662,8 +680,8 @@
                 <h3>Base Budget</h3>
                 <div class="amount" id="displayBaseBudget" style="color: #c7d2fe;">₹0.00</div>
             </div>
-            <div class="card">
-                <h3>Extra Income</h3>
+            <div class="card clickable" onclick="openIncomeDetailsModal()" title="Click to view Cash & Online Extra Income Breakdown 🔍">
+                <h3>Extra Income 🔍</h3>
                 <div class="amount" id="totalIncome" style="color: var(--success-color);">₹0.00</div>
             </div>
             <div class="card full-width clickable" onclick="openExpenseDetails()" title="Click to view all expenses breakdown">
@@ -861,6 +879,7 @@
         </div>
     </div>
 
+    <!-- Category Details Modal -->
     <div class="modal-overlay" id="categoryDetailsModal">
         <div class="modal-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -871,16 +890,26 @@
         </div>
     </div>
 
+    <!-- NEW: Detailed Extra Income Modal -->
+    <div class="modal-overlay" id="incomeDetailsModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 id="incomeModalTitle" style="font-size: 1.05rem; color: var(--success-color);">💰 Extra Income Breakdown</h2>
+                <button class="action-icon-btn btn-del" onclick="closeIncomeDetailsModal()">✕</button>
+            </div>
+            <div id="incomeDetailsContent" style="max-height: 380px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyDdruN31NeSxw16zKVBQN15LJfL_wYhPe8",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL:
-"https://monthly-budget-planner-new-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "monthly-budget-planner-new",
-            storageBucket: "monthly-budget-planner-new.firebasestorage.app",
-            messagingSenderId: "870398619862",
-            appId: "1:870398619862:web:38dc963ec8c968bfc45977"
+            apiKey: "",
+            authDomain: "",
+            databaseURL: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
         };
 
         let database = null;
@@ -906,7 +935,6 @@
             return `${year}-${month}`;
         }
 
-        // Real-time Current Month Always First Priority on Refresh
         const REAL_CURRENT_MONTH = getFormattedMonthKey();
         let currentMonth = REAL_CURRENT_MONTH;
 
@@ -937,16 +965,7 @@
             for (let mKey in groupedMap) {
                 localStorage.setItem('transactions_' + mKey, JSON.stringify(groupedMap[mKey]));
                 if (database) {
-                    database.ref(`months/${mKey}/transactions`).set(groupedMap[mKey]).catch(() => {});
-                }
-            }
-
-            localStorage.removeItem('transactions');
-        }
-
-        function loadMonthData(monthKey) {
-            const statusEl = document.getElementById('syncStatus');
-            statusEl.innerText = `⚡ Loading ${monthKey}...`;
+                    database.ref(`months/${mKey}/transactions`).set(groupedMap[mKey]).catch(() => {}); } }  localStorage.removeItem('transactions'); }  function loadMonthData(monthKey) { const statusEl = document.getElementById('syncStatus'); statusEl.innerText = `⚡ Loading ${monthKey}...`;
 
             let oldLegacyTrans = JSON.parse(localStorage.getItem('transactions'));
             if (oldLegacyTrans) cleanAndUnclusterData(oldLegacyTrans);
@@ -1289,29 +1308,7 @@
                             currentMonth = fileNameMonth;
                         }
                         loadMonthData(currentMonth);
-                        alert(`Successfully imported & un-clustered data! Selected Month: ${currentMonth}`);
-                    } else {
-                        alert('Invalid JSON structure: Could not find transactions.');
-                    }
-                } catch (err) {
-                    alert('Error parsing JSON file.');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function exportBackupJSON() {
-            const baseBudget = getBaseBudget();
-            const monthData = {
-                month: currentMonth,
-                baseBudget: baseBudget,
-                transactions: transactions,
-                udhaarList: udhaarList
-            };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monthData, null, 2));
-            const a = document.createElement('a');
-            a.href = dataStr;
-            a.download = `${currentMonth}.json`;
+                        alert(`Successfully imported & un-clustered data! Selected Month: ${currentMonth}`); } else { alert('Invalid JSON structure: Could not find transactions.'); } } catch (err) { alert('Error parsing JSON file.'); } }; reader.readAsText(file); }  function exportBackupJSON() { const baseBudget = getBaseBudget(); const monthData = { month: currentMonth, baseBudget: baseBudget, transactions: transactions, udhaarList: udhaarList }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monthData, null, 2)); const a = document.createElement('a'); a.href = dataStr; a.download = `${currentMonth}.json`;
             a.click();
         }
 
@@ -1331,6 +1328,111 @@
                 monthTransactions: transactions 
             };
         }
+
+        // NEW FEATURE: Detailed Extra Income Breakdown Modal
+        function openIncomeDetailsModal() {
+            const totals = getTotals();
+            const incomeTrans = totals.monthTransactions.filter(t => t.type === 'income');
+            
+            document.getElementById('incomeModalTitle').innerText = `💰 Extra Income Breakdown (${currentMonth})`;
+            const container = document.getElementById('incomeDetailsContent');
+            container.innerHTML = '';
+
+            if (incomeTrans.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#9ca3af; padding:20px;">No extra income transactions recorded for this month.</div>`;
+            } else {
+                let upiTrans = incomeTrans.filter(t => t.paymentMode === 'UPI');
+                let cashTrans = incomeTrans.filter(t => (t.paymentMode || 'Cash') === 'Cash');
+
+                let totalUpi = upiTrans.reduce((sum, t) => sum + t.amount, 0);
+                let totalCash = cashTrans.reduce((sum, t) => sum + t.amount, 0);
+
+                let html = ``;
+
+                // ONLINE / UPI SECTION
+                html += `
+                    <div class="income-breakdown-section" style="background: rgba(124, 58, 237, 0.05); border-color: rgba(124, 58, 237, 0.2);">
+                        <div class="income-breakdown-title" style="color: #7c3aed;">
+                            <span>📱 Online / UPI Extra Income</span>
+                            <span>Total: ₹${totalUpi.toFixed(2)}</span>
+                        </div>
+                `;
+
+                if (upiTrans.length === 0) {
+                    html += `<div style="font-size:0.8rem; color:#9ca3af;">No UPI income entries.</div>`;
+                } else {
+                    // Group by category (e.g. Rapido/Uber, Freelancing, etc.)
+                    let upiCategoryMap = {};
+                    upiTrans.forEach(t => {
+                        upiCategoryMap[t.category] = (upiCategoryMap[t.category] || 0) + t.amount;
+                    });
+
+                    for (let cat in upiCategoryMap) {
+                        html += `
+                            <div style="font-size:0.82rem; font-weight:bold; margin-top:4px; color:var(--text-color);">
+                                • ${cat}: ₹${upiCategoryMap[cat].toFixed(2)}
+                            </div>
+                        `;
+                    }
+
+                    html += `<div style="margin-top:8px; border-top:1px dashed var(--border-color); padding-top:6px;">`;
+                    upiTrans.forEach(t => {
+                        html += `
+                            <div class="analytics-item-row" style="padding:4px 0; font-size:0.8rem;">
+                                <div><strong>${t.title}</strong> (${t.category}) <br><span style="font-size:0.7rem; color:#9ca3af;">${t.date}</span></div>
+                                <strong style="color:var(--success-color);">+₹${t.amount.toFixed(2)}</strong>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+                html += `</div>`;
+
+                // CASH SECTION
+                html += `
+                    <div class="income-breakdown-section" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.2);">
+                        <div class="income-breakdown-title" style="color: #2563eb;">
+                            <span>💵 Cash Extra Income</span>
+                            <span>Total: ₹${totalCash.toFixed(2)}</span>
+                        </div>
+                `;
+
+                if (cashTrans.length === 0) {
+                    html += `<div style="font-size:0.8rem; color:#9ca3af;">No Cash income entries.</div>`;
+                } else {
+                    let cashCategoryMap = {};
+                    cashTrans.forEach(t => {
+                        cashCategoryMap[t.category] = (cashCategoryMap[t.category] || 0) + t.amount;
+                    });
+
+                    for (let cat in cashCategoryMap) {
+                        html += `
+                            <div style="font-size:0.82rem; font-weight:bold; margin-top:4px; color:var(--text-color);">
+                                • ${cat}: ₹${cashCategoryMap[cat].toFixed(2)}
+                            </div>
+                        `;
+                    }
+
+                    html += `<div style="margin-top:8px; border-top:1px dashed var(--border-color); padding-top:6px;">`;
+                    cashTrans.forEach(t => {
+                        html += `
+                            <div class="analytics-item-row" style="padding:4px 0; font-size:0.8rem;">
+                                <div><strong>${t.title}</strong> (${t.category}) <br><span style="font-size:0.7rem; color:#9ca3af;">${t.date}</span></div>
+                                <strong style="color:var(--success-color);">+₹${t.amount.toFixed(2)}</strong>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+                html += `</div>`;
+
+                container.innerHTML = html;
+            }
+
+            document.getElementById('incomeDetailsModal').style.display = 'flex';
+        }
+
+        function closeIncomeDetailsModal() { document.getElementById('incomeDetailsModal').style.display = 'none'; }
 
         function openExpenseDetails() {
             const totals = getTotals();
