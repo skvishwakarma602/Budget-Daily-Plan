@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Budget Planner Pro - Income Breakdown Edition</title>
+    <title>Monthly Budget Planner Pro - Direct Edition</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
-    <!-- Firebase SDK CDN (Compat Version) -->
+    <!-- Firebase SDK CDNs (Database Only) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
@@ -81,17 +81,22 @@
             gap: 8px;
         }
 
-        .theme-toggle-btn {
+        .header-btns {
             position: absolute;
             top: 0;
             right: 0;
+            display: flex;
+            gap: 6px;
+        }
+
+        .theme-toggle-btn {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-color);
             padding: 8px 12px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             box-shadow: var(--shadow);
         }
 
@@ -100,6 +105,32 @@
             color: var(--success-color);
             margin-bottom: 8px;
             font-weight: bold;
+        }
+
+        /* Toast Popup Notification for Today's Activity */
+        #toastPopup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            color: white;
+            padding: 18px 24px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            z-index: 10000;
+            font-size: 0.95rem;
+            width: 92%;
+            max-width: 460px;
+            text-align: center;
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        #toastPopup.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
 
         .reminder-banner {
@@ -637,12 +668,17 @@
 </head>
 <body data-theme="light">
 
+    <!-- Toast Notification Popup for Today's Activity -->
+    <div id="toastPopup"></div>
+
     <div class="container">
         <header>
-            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark/Light Mode">🌙 Dark</button>
+            <div class="header-btns">
+                <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark/Light Mode">🌙</button>
+            </div>
             <h1><span>💸</span> Monthly Budget Planner</h1>
-            <p style="font-size: 0.85rem; color: #9ca3af;">High-Speed Income Breakdown Pro Edition</p>
-            <div id="syncStatus" class="sync-status">⚡ App Ready</div>
+            <p style="font-size: 0.85rem; color: #9ca3af;">High-Speed Direct Edition</p>
+            <div id="syncStatus" class="sync-status">⚡ Connecting...</div>
         </header>
 
         <div id="eveningReminderBanner" class="reminder-banner" style="display: none;">
@@ -890,7 +926,7 @@
         </div>
     </div>
 
-    <!-- NEW: Detailed Extra Income Modal -->
+    <!-- Extra Income Breakdown Modal -->
     <div class="modal-overlay" id="incomeDetailsModal">
         <div class="modal-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -913,6 +949,7 @@
         };
 
         let database = null;
+
         if (firebaseConfig.apiKey && firebaseConfig.databaseURL) {
             try {
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -928,6 +965,7 @@
         let editingId = null;
         let analyticsChartInstance = null;
         let currentAnalyticsTab = 'daily';
+        let toastTimeout = null;
 
         function getFormattedMonthKey(date = new Date()) {
             const year = date.getFullYear();
@@ -938,37 +976,51 @@
         const REAL_CURRENT_MONTH = getFormattedMonthKey();
         let currentMonth = REAL_CURRENT_MONTH;
 
-        function extractMonthFromDate(dateStr) {
-            if (!dateStr) return REAL_CURRENT_MONTH;
-            const monthMap = { 'Jan':'01', 'Feb':'02', 'Mar':'03', 'Apr':'04', 'May':'05', 'Jun':'06', 'Jul':'07', 'Aug':'08', 'Sep':'09', 'Oct':'10', 'Nov':'11', 'Dec':'12' };
-            for (let mName in monthMap) {
-                if (dateStr.includes(mName)) {
-                    let yearMatch = dateStr.match(/\b20\d{2}\b/);
-                    let year = yearMatch ? yearMatch[0] : '2026';
-                    return `${year}-${monthMap[mName]}`;
-                }
-            }
-            return REAL_CURRENT_MONTH;
+        // Toast Popup Function for Today's Activity
+        function showToastPopup(todayIncome, todayExpense, todayNet) {
+            const toast = document.getElementById('toastPopup');
+            let netColor = todayNet >= 0 ? '#34d399' : '#f87171';
+            
+            toast.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 6px; font-size: 1.05rem; color: #c7d2fe; letter-spacing: 0.3px;">📅 Aaj ki Activity Summary</div>
+                <div style="display: flex; justify-content: space-around; font-size: 0.92rem; margin-top: 8px; background: rgba(255,255,255,0.07); padding: 8px; border-radius: 10px;">
+                    <div>🟢 Earning:<br><strong style="color: #34d399; font-size: 1rem;">₹${todayIncome.toFixed(2)}</strong></div>
+                    <div>🔴 Expense:<br><strong style="color: #f87171; font-size: 1rem;">₹${todayExpense.toFixed(2)}</strong></div>
+                    <div>⚡ Net:<br><strong style="color: ${netColor}; font-size: 1rem;">₹${todayNet.toFixed(2)}</strong></div>
+                </div>
+            `;
+            
+            toast.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
         }
 
-        function cleanAndUnclusterData(rawTransList) {
-            if (!Array.isArray(rawTransList)) return;
+        function calculateTodayStats() {
+            const todayStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
             
-            let groupedMap = {};
-            rawTransList.forEach(t => {
-                let mKey = t.month || extractMonthFromDate(t.date);
-                t.month = mKey;
-                if (!groupedMap[mKey]) groupedMap[mKey] = [];
-                groupedMap[mKey].push(t);
+            let todayIncome = 0;
+            let todayExpense = 0;
+
+            transactions.forEach(t => {
+                if (t.date && t.date.includes(todayStr)) {
+                    if (t.type === 'income') {
+                        todayIncome += t.amount;
+                    } else if (t.type === 'expense') {
+                        todayExpense += t.amount;
+                    }
+                }
             });
 
-            for (let mKey in groupedMap) {
-                localStorage.setItem('transactions_' + mKey, JSON.stringify(groupedMap[mKey]));
-                if (database) {
-                    database.ref(`months/${mKey}/transactions`).set(groupedMap[mKey]).catch(() => {}); } }  localStorage.removeItem('transactions'); }  function loadMonthData(monthKey) { const statusEl = document.getElementById('syncStatus'); statusEl.innerText = `⚡ Loading ${monthKey}...`;
+            let todayNet = todayIncome - todayExpense;
+            showToastPopup(todayIncome, todayExpense, todayNet);
+        }
 
-            let oldLegacyTrans = JSON.parse(localStorage.getItem('transactions'));
-            if (oldLegacyTrans) cleanAndUnclusterData(oldLegacyTrans);
+        function loadMonthData(monthKey) {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.innerText = `⚡ Loading ${monthKey}...`;
 
             if (!database) {
                 fallbackLocalLoad(monthKey);
@@ -1006,7 +1058,7 @@
                 updateMonthDropdown();
                 updateCategories();
                 updateUI();
-                statusEl.innerText = "🟢 Connected & Synced";
+                statusEl.innerText = "🟢 Cloud Synced & Ready";
             }).catch(err => {
                 fallbackLocalLoad(monthKey);
             });
@@ -1014,7 +1066,7 @@
 
         function fallbackLocalLoad(monthKey) {
             const statusEl = document.getElementById('syncStatus');
-            statusEl.innerText = "⚡ Ready (Local Month Storage)";
+            statusEl.innerText = "⚡ Ready (Local Storage)";
             statusEl.style.color = "var(--primary-color)";
             
             transactions = JSON.parse(localStorage.getItem('transactions_' + monthKey)) || [];
@@ -1024,7 +1076,6 @@
             for (let i = 0; i < localStorage.length; i++) {
                 let key = localStorage.key(i);
                 if (key.startsWith('transactions_')) localMonths.add(key.replace('transactions_', ''));
-                if (key.startsWith('baseBudget_')) localMonths.add(key.replace('baseBudget_', ''));
             }
             availableMonthsList = Array.from(localMonths).sort().reverse();
 
@@ -1058,7 +1109,6 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle-btn').innerText = newTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
         }
 
         function checkEveningReminder() {
@@ -1154,11 +1204,15 @@
         }
 
         function saveTransaction() {
+            // Amount input field se keyboard close karne ke liye blur() call kiya gaya hai
+            const amountInput = document.getElementById('transAmount');
+            amountInput.blur();
+
             const type = document.getElementById('transType').value;
             const category = document.getElementById('transCategory').value;
             const paymentMode = document.getElementById('transPaymentMode').value;
             const title = document.getElementById('transTitle').value.trim() || category;
-            const amount = parseFloat(document.getElementById('transAmount').value);
+            const amount = parseFloat(amountInput.value);
 
             if (isNaN(amount) || amount <= 0) {
                 alert('Please provide a valid positive amount.');
@@ -1189,10 +1243,13 @@
             saveData();
             cancelEdit();
             updateUI();
+            
+            // Screen ko top par focus karke Toast Popup trigger kiya gaya hai
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            calculateTodayStats();
+
             document.getElementById('quickAddInlineBtn').style.display = 'none';
-            const amountInput = document.getElementById('transAmount');
             amountInput.value = '';
-            amountInput.focus();
         }
 
         function editTransaction(id) {
@@ -1303,12 +1360,35 @@
                     let rawList = data.transactions || (Array.isArray(data) ? data : null);
 
                     if (rawList) {
-                        cleanAndUnclusterData(rawList);
+                        transactions = rawList;
                         if (/^\d{4}-\d{2}$/.test(fileNameMonth)) {
                             currentMonth = fileNameMonth;
                         }
+                        saveData();
                         loadMonthData(currentMonth);
-                        alert(`Successfully imported & un-clustered data! Selected Month: ${currentMonth}`); } else { alert('Invalid JSON structure: Could not find transactions.'); } } catch (err) { alert('Error parsing JSON file.'); } }; reader.readAsText(file); }  function exportBackupJSON() { const baseBudget = getBaseBudget(); const monthData = { month: currentMonth, baseBudget: baseBudget, transactions: transactions, udhaarList: udhaarList }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monthData, null, 2)); const a = document.createElement('a'); a.href = dataStr; a.download = `${currentMonth}.json`;
+                        alert(`Successfully imported data! Selected Month: ${currentMonth}`);
+                    } else {
+                        alert('Invalid JSON structure.');
+                    }
+                } catch (err) {
+                    alert('Error parsing JSON file.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportBackupJSON() {
+            const baseBudget = getBaseBudget();
+            const monthData = {
+                month: currentMonth,
+                baseBudget: baseBudget,
+                transactions: transactions,
+                udhaarList: udhaarList
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monthData, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `${currentMonth}.json`;
             a.click();
         }
 
@@ -1329,7 +1409,6 @@
             };
         }
 
-        // NEW FEATURE: Detailed Extra Income Breakdown Modal
         function openIncomeDetailsModal() {
             const totals = getTotals();
             const incomeTrans = totals.monthTransactions.filter(t => t.type === 'income');
@@ -1349,7 +1428,6 @@
 
                 let html = ``;
 
-                // ONLINE / UPI SECTION
                 html += `
                     <div class="income-breakdown-section" style="background: rgba(124, 58, 237, 0.05); border-color: rgba(124, 58, 237, 0.2);">
                         <div class="income-breakdown-title" style="color: #7c3aed;">
@@ -1361,34 +1439,23 @@
                 if (upiTrans.length === 0) {
                     html += `<div style="font-size:0.8rem; color:#9ca3af;">No UPI income entries.</div>`;
                 } else {
-                    // Group by category (e.g. Rapido/Uber, Freelancing, etc.)
                     let upiCategoryMap = {};
                     upiTrans.forEach(t => {
                         upiCategoryMap[t.category] = (upiCategoryMap[t.category] || 0) + t.amount;
                     });
 
                     for (let cat in upiCategoryMap) {
-                        html += `
-                            <div style="font-size:0.82rem; font-weight:bold; margin-top:4px; color:var(--text-color);">
-                                • ${cat}: ₹${upiCategoryMap[cat].toFixed(2)}
-                            </div>
-                        `;
+                        html += `<div style="font-size:0.82rem; font-weight:bold; margin-top:4px; color:var(--text-color);">• ${cat}: ₹${upiCategoryMap[cat].toFixed(2)}</div>`;
                     }
 
                     html += `<div style="margin-top:8px; border-top:1px dashed var(--border-color); padding-top:6px;">`;
                     upiTrans.forEach(t => {
-                        html += `
-                            <div class="analytics-item-row" style="padding:4px 0; font-size:0.8rem;">
-                                <div><strong>${t.title}</strong> (${t.category}) <br><span style="font-size:0.7rem; color:#9ca3af;">${t.date}</span></div>
-                                <strong style="color:var(--success-color);">+₹${t.amount.toFixed(2)}</strong>
-                            </div>
-                        `;
+                        html += `<div class="analytics-item-row" style="padding:4px 0; font-size:0.8rem;"><div><strong>${t.title}</strong> (${t.category}) <br><span style="font-size:0.7rem; color:#9ca3af;">${t.date}</span></div><strong style="color:var(--success-color);">+₹${t.amount.toFixed(2)}</strong></div>`;
                     });
                     html += `</div>`;
                 }
                 html += `</div>`;
 
-                // CASH SECTION
                 html += `
                     <div class="income-breakdown-section" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.2);">
                         <div class="income-breakdown-title" style="color: #2563eb;">
@@ -1406,21 +1473,12 @@
                     });
 
                     for (let cat in cashCategoryMap) {
-                        html += `
-                            <div style="font-size:0.82rem; font-weight:bold; margin-top:4px; color:var(--text-color);">
-                                • ${cat}: ₹${cashCategoryMap[cat].toFixed(2)}
-                            </div>
-                        `;
+                        html += `<div style="font-size:0.82rem; font-weight:bold; margin-top:4px; color:var(--text-color);">• ${cat}: ₹${cashCategoryMap[cat].toFixed(2)}</div>`;
                     }
 
                     html += `<div style="margin-top:8px; border-top:1px dashed var(--border-color); padding-top:6px;">`;
                     cashTrans.forEach(t => {
-                        html += `
-                            <div class="analytics-item-row" style="padding:4px 0; font-size:0.8rem;">
-                                <div><strong>${t.title}</strong> (${t.category}) <br><span style="font-size:0.7rem; color:#9ca3af;">${t.date}</span></div>
-                                <strong style="color:var(--success-color);">+₹${t.amount.toFixed(2)}</strong>
-                            </div>
-                        `;
+                        html += `<div class="analytics-item-row" style="padding:4px 0; font-size:0.8rem;"><div><strong>${t.title}</strong> (${t.category}) <br><span style="font-size:0.7rem; color:#9ca3af;">${t.date}</span></div><strong style="color:var(--success-color);">+₹${t.amount.toFixed(2)}</strong></div>`;
                     });
                     html += `</div>`;
                 }
@@ -1447,13 +1505,7 @@
                 expenseTrans.forEach(t => {
                     let itemDiv = document.createElement('div');
                     itemDiv.className = 'analytics-item-row';
-                    itemDiv.innerHTML = `
-                        <div>
-                            <strong>${t.title}</strong><br>
-                            <span style="font-size:0.75rem; color:#9ca3af;">Category: ${t.category} • Mode: ${t.paymentMode || 'Cash'} • ${t.date}</span>
-                        </div>
-                        <strong style="color:var(--danger-color);">-₹${t.amount.toFixed(2)}</strong>
-                    `;
+                    itemDiv.innerHTML = `<div><strong>${t.title}</strong><br><span style="font-size:0.75rem; color:#9ca3af;">Category: ${t.category} • Mode: ${t.paymentMode || 'Cash'} • ${t.date}</span></div><strong style="color:var(--danger-color);">-₹${t.amount.toFixed(2)}</strong>`;
                     listContainer.appendChild(itemDiv);
                 });
             }
@@ -1475,13 +1527,7 @@
                 catTransactions.forEach(t => {
                     let itemDiv = document.createElement('div');
                     itemDiv.className = 'analytics-item-row';
-                    itemDiv.innerHTML = `
-                        <div>
-                            <strong>${t.title}</strong><br>
-                            <span style="font-size:0.75rem; color:#9ca3af;">${t.date} • Mode: ${t.paymentMode || 'Cash'}</span>
-                        </div>
-                        <strong style="color:var(--danger-color);">-₹${t.amount.toFixed(2)}</strong>
-                    `;
+                    itemDiv.innerHTML = `<div><strong>${t.title}</strong><br><span style="font-size:0.75rem; color:#9ca3af;">${t.date} • Mode: ${t.paymentMode || 'Cash'}</span></div><strong style="color:var(--danger-color);">-₹${t.amount.toFixed(2)}</strong>`;
                     listContainer.appendChild(itemDiv);
                 });
             }
@@ -1503,13 +1549,7 @@
                 modeTransactions.forEach(t => {
                     let itemDiv = document.createElement('div');
                     itemDiv.className = 'analytics-item-row';
-                    itemDiv.innerHTML = `
-                        <div>
-                            <strong>${t.title}</strong><br>
-                            <span style="font-size:0.75rem; color:#9ca3af;">Category: ${t.category} • ${t.date}</span>
-                        </div>
-                        <strong style="color:${t.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)'};">${t.type === 'income' ? '+' : '-'}₹${t.amount.toFixed(2)}</strong>
-                    `;
+                    itemDiv.innerHTML = `<div><strong>${t.title}</strong><br><span style="font-size:0.75rem; color:#9ca3af;">Category: ${t.category} • ${t.date}</span></div><strong style="color:${t.type === 'income' ? 'var(--success-color)' : 'var(--danger-color)'};">${t.type === 'income' ? '+' : '-'}₹${t.amount.toFixed(2)}</strong>`;
                     listContainer.appendChild(itemDiv);
                 });
             }
@@ -1887,12 +1927,10 @@
             netEl.style.color = totals.net >= 0 ? '#f8fafc' : '#f87171';
         }
 
-        // Initialize App
+        // Initialize App directly without login checks
         window.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
-            const btn = document.querySelector('.theme-toggle-btn');
-            if(btn) btn.innerText = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
 
             loadMonthData(currentMonth);
             checkEveningReminder();
