@@ -982,7 +982,7 @@
             let netColor = todayNet >= 0 ? '#34d399' : '#f87171';
             
             toast.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 6px; font-size: 1.05rem; color: #c7d2fe; letter-spacing: 0.3px;">📅 Aaj ki Activity Summary</div>
+                <div style="font-weight: bold; margin-bottom: 6px; font-size: 1.05rem; color: #c7d2fe; letter-spacing: 0.3px;">📅 Today Activity Summary</div>
                 <div style="display: flex; justify-content: space-around; font-size: 0.92rem; margin-top: 8px; background: rgba(255,255,255,0.07); padding: 8px; border-radius: 10px;">
                     <div>🟢 Earning:<br><strong style="color: #34d399; font-size: 1rem;">₹${todayIncome.toFixed(2)}</strong></div>
                     <div>🔴 Expense:<br><strong style="color: #f87171; font-size: 1rem;">₹${todayExpense.toFixed(2)}</strong></div>
@@ -1058,6 +1058,11 @@
                 updateMonthDropdown();
                 updateCategories();
                 updateUI();
+                
+                // Page load ya refresh hone par automatic popup trigger karne ke liye
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                calculateTodayStats();
+
                 statusEl.innerText = "🟢 Cloud Synced & Ready";
             }).catch(err => {
                 fallbackLocalLoad(monthKey);
@@ -1082,6 +1087,10 @@
             updateMonthDropdown();
             updateCategories();
             updateUI();
+
+            // Page load ya refresh hone par automatic popup trigger karne ke liye
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            calculateTodayStats();
         }
 
         function saveData() {
@@ -1204,9 +1213,8 @@
         }
 
         function saveTransaction() {
-            // Amount input field se keyboard close karne ke liye blur() call kiya gaya hai
             const amountInput = document.getElementById('transAmount');
-            amountInput.blur();
+            amountInput.blur(); // Keyboard close karne ke liye
 
             const type = document.getElementById('transType').value;
             const category = document.getElementById('transCategory').value;
@@ -1244,7 +1252,6 @@
             cancelEdit();
             updateUI();
             
-            // Screen ko top par focus karke Toast Popup trigger kiya gaya hai
             window.scrollTo({ top: 0, behavior: 'smooth' });
             calculateTodayStats();
 
