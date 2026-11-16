@@ -121,21 +121,21 @@
             font-weight: bold;
         }
 
-        /* Adaptive Toast Popup Notification (Light for Day, Dark for Night) */
+        /* Adaptive Toast Popup Notification */
         #toastPopup {
             position: fixed;
-            top: 20px;
+            top: 15px;
             left: 50%;
-            transform: translateX(-50%) translateY(-120px);
+            transform: translateX(-50%) translateY(-140px);
             background: var(--toast-bg);
             color: var(--toast-text);
-            padding: 18px 24px;
+            padding: 14px 18px;
             border-radius: 16px;
             box-shadow: var(--toast-shadow);
             z-index: 10000;
-            font-size: 0.95rem;
-            width: 92%;
-            max-width: 460px;
+            font-size: 0.88rem;
+            width: 94%;
+            max-width: 480px;
             text-align: center;
             opacity: 0;
             transition: transform 0.3s ease, opacity 0.3s ease, background 0.2s ease, color 0.2s ease;
@@ -990,17 +990,26 @@
         const REAL_CURRENT_MONTH = getFormattedMonthKey();
         let currentMonth = REAL_CURRENT_MONTH;
 
-        // Toast Popup Function with Adaptive Theme Support
+        // Enhanced Toast Popup Function (Aaj ki Activity + Pure Mahine ka Total)
         function showToastPopup(todayIncome, todayExpense, todayNet) {
             const toast = document.getElementById('toastPopup');
-            let netColor = todayNet >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            const totals = getTotals();
+            let todayNetColor = todayNet >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            let monthNetColor = totals.net >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
             
             toast.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 6px; font-size: 1.05rem; letter-spacing: 0.3px;">📅 Aaj ki Activity Summary</div>
-                <div style="display: flex; justify-content: space-around; font-size: 0.92rem; margin-top: 8px; background: var(--toast-inner-bg); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color);">
-                    <div>🟢 Earning:<br><strong style="color: var(--success-color); font-size: 1rem;">₹${todayIncome.toFixed(2)}</strong></div>
-                    <div>🔴 Expense:<br><strong style="color: var(--danger-color); font-size: 1rem;">₹${todayExpense.toFixed(2)}</strong></div>
-                    <div>⚡ Net:<br><strong style="color: ${netColor}; font-size: 1rem;">₹${todayNet.toFixed(2)}</strong></div>
+                <div style="font-weight: bold; margin-bottom: 4px; font-size: 0.95rem; letter-spacing: 0.3px;">📅 Aaj ki Activity Summary</div>
+                <div style="display: flex; justify-content: space-around; font-size: 0.85rem; background: var(--toast-inner-bg); padding: 6px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 6px;">
+                    <div>🟢 Earning: <strong style="color: var(--success-color);">₹${todayIncome.toFixed(2)}</strong></div>
+                    <div>🔴 Expense: <strong style="color: var(--danger-color);">₹${todayExpense.toFixed(2)}</strong></div>
+                    <div>⚡ Net: <strong style="color: ${todayNetColor};">₹${todayNet.toFixed(2)}</strong></div>
+                </div>
+
+                <div style="font-weight: bold; margin-bottom: 4px; font-size: 0.95rem; letter-spacing: 0.3px;">📊 Pure Mahine ka Total Summary</div>
+                <div style="display: flex; justify-content: space-around; font-size: 0.85rem; background: var(--toast-inner-bg); padding: 6px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div>💰 Income: <strong style="color: var(--success-color);">₹${totals.totalIncome.toFixed(2)}</strong></div>
+                    <div>💸 Expense: <strong style="color: var(--danger-color);">₹${totals.totalExpense.toFixed(2)}</strong></div>
+                    <div>✨ Total Net: <strong style="color: ${monthNetColor};">₹${totals.net.toFixed(2)}</strong></div>
                 </div>
             `;
             
@@ -1009,7 +1018,7 @@
             
             toastTimeout = setTimeout(() => {
                 toast.classList.remove('show');
-            }, 4000);
+            }, 5500);
         }
 
         function calculateTodayStats() {
